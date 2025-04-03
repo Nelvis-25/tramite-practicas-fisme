@@ -35,6 +35,7 @@ class TipoEstudianteResource extends Resource
                     ->required()
                     ->maxLength(255),
                 Forms\Components\Toggle::make('estado')
+                    ->required()
                     ->default(true),
             ]);
     }

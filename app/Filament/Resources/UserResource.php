@@ -57,7 +57,12 @@ class UserResource extends Resource
                     ->imageEditor(),
                 RichEditor::make('informacion')
                     ->label('Descripción')
-                    ->fileAttachmentsDirectory('usuarios_descrip')
+                    ->fileAttachmentsDirectory('usuarios_descrip'),
+                    Forms\Components\Select::make('roles')
+                    ->relationship('roles', 'name')
+                    ->multiple()
+                    ->preload()
+                    ->searchable(),
             ]);
     }
 
