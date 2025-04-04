@@ -10,4 +10,8 @@ class Requisito extends Model
     use HasFactory;
     protected $table = 'requisitos';
     protected $fillable = ['nombre', 'estado'];
+    public function validaciones()
+{
+    return $this->hasMany(Validacion::class);
+}
 }

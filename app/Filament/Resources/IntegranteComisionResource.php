@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class IntegranteComisionResource extends Resource
 {
     protected static ?string $model = IntegranteComision::class;
+    protected static ?string $navigationGroup = 'Comisiones permanentes';
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 

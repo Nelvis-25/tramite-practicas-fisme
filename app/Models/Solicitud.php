@@ -21,6 +21,9 @@ class Solicitud extends Model
         'comprobante_pago',
         'estado',
     ];
+    protected $attributes = [
+        'estado' => 'Pendiente',
+    ];
      public function estudiante(): BelongsTo
     {
         return $this->belongsTo(Estudiante::class);
@@ -34,4 +37,24 @@ class Solicitud extends Model
         return $this->belongsTo(Docente::class);
     }
     
+    
+
+public function requisitos()
+{
+    return $this->belongsToMany(Requisito::class, 'validacions');
+}
+
+public function validaciones() {
+    return $this->hasMany(\App\Models\Validacion::class);
+} 
+protected static function boot()
+{
+    parent::boot();
+    
+    static::updated(function ($solicitud) {
+        if ($solicitud->validaciones()->where('entregado', false)->doesntExist()) {
+            $solicitud->update(['estado' => 'Validado']);
+        }
+    });
+}
 }
