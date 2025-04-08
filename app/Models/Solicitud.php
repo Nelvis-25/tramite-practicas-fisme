@@ -24,6 +24,10 @@ class Solicitud extends Model
     protected $attributes = [
         'estado' => 'Pendiente',
     ];
+    public function planDePractica()
+    {
+        return $this->hasOne(PlanDePractica::class, 'solicitud_id');
+    }
      public function estudiante(): BelongsTo
     {
         return $this->belongsTo(Estudiante::class);
@@ -36,17 +40,20 @@ class Solicitud extends Model
     {
         return $this->belongsTo(Docente::class);
     }
-    
-    
+    public function observacions()
+{
+    return $this->hasMany(Observacion::class)->latest();
+}
+    public function validaciones()
+    {
+        return $this->hasMany(Validacion::class);
+    }  
 
 public function requisitos()
 {
     return $this->belongsToMany(Requisito::class, 'validacions');
 }
-
-public function validaciones() {
-    return $this->hasMany(\App\Models\Validacion::class);
-} 
+ 
 protected static function boot()
 {
     parent::boot();

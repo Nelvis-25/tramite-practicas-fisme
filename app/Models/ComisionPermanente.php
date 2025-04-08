@@ -68,4 +68,9 @@ class ComisionPermanente extends Model
     {
         return $this->hasMany(IntegranteComision::class);
     }
+    public function planDePractica()
+    {
+        return $this->hasMany(PlanDePractica::class, 'comision_permanente_id');
+    }
+
 }

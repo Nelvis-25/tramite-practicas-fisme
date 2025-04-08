@@ -17,14 +17,32 @@ class IntegranteComision extends Model
         'cargo'
     ];
 
-    public function docente(): BelongsTo
-    {
-        return $this->belongsTo(Docente::class);
-    }
+    
+    public function docente()
+{
+    return $this->belongsTo(Docente::class);
+}
 
-    public function comisionPermanente(): BelongsTo
+    public function comisionPermanente()
     {
         return $this->belongsTo(ComisionPermanente::class);
     }
+    protected static function boot()
+{
+    parent::boot();
+
+    static::saving(function ($model) {
+        if (in_array($model->cargo, ['Presidente', 'Secretario'])) {
+            $exists = self::where('comision_permanente_id', $model->comision_permanente_id)
+                ->where('cargo', $model->cargo)
+                ->when($model->exists, fn($query) => $query->where('id', '!=', $model->id))
+                ->exists();
+
+            if ($exists) {
+                throw new \Exception("Ya existe un {$model->cargo} en esta comisión.");
+            }
+        }
+    });
+}
 
 }

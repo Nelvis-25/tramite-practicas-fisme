@@ -9,6 +9,7 @@ use App\Models\Solicitud;
 use App\Models\Validacion;
 use Filament\Tables\Actions\Action;
 use Filament\Forms;
+use Filament\Forms\Components\Livewire;
 use Filament\Forms\Form;
 use Filament\Forms\Set;
 use Filament\Notifications\Notification;
@@ -110,14 +111,14 @@ class SolicitudResource extends Resource
                 Tables\Columns\TextColumn::make('nombre')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('estudiante.nombre')
-                    ->numeric()
-                    ->sortable(),
+                    
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('lineaInvestigacion.nombre')
-                    ->numeric()
-                    ->sortable(),
+                    
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('asesor.nombre')
                     ->label('Asesor')
-                    ->sortable()
+                    
                     ->searchable(),
                     
                     Tables\Columns\TextColumn::make('solicitud')
@@ -173,15 +174,16 @@ class SolicitudResource extends Resource
                     ->searchable(),
                     Tables\Columns\TextColumn::make('estado')
                     ->label('Estado')
+                    ->searchable()
                     ->html()
                     ->formatStateUsing(function ($state) {
                         // Definir el color según el estado
                         if ($state == 'Pendiente') {
-                            return "<span style='color: green;'>" . $state . "</span>";
+                            return "<span style='color: #f59e0b; font-weight: bold;'>$state</span>"; // naranja
                         } elseif ($state == 'Validado') {
-                            return "<span style='color: prymary;'>" . $state . "</span>";
+                            return "<span style='color: #10b981; font-weight: bold;'>$state</span>"; // verde esmeralda
                         } elseif ($state == 'Rechazado') {
-                            return "<span style='color: red;'>" . $state . "</span>";
+                            return "<span style='color: #ef4444; font-weight: bold;'>$state</span>"; // rojo fuerte
                         }
                         return $state;
                     }),
@@ -199,42 +201,114 @@ class SolicitudResource extends Resource
                 //
             ])
             ->actions([
+                
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
                 Action::make('Validar')
                 ->label('Validar')
-                ->icon('heroicon-o-document-check')  // Añade un ícono
-                ->color('primary')  // Color verde para mejor UI
-                ->action(function (Solicitud $record) {
-                    // Verifica si ya existen validaciones (más eficiente)
-                    if ($record->validaciones()->doesntExist()) {
-                        $requisitos = Requisito::all();
-                        
-                        // Usa createMany para mejor performance
-                        $record->validaciones()->createMany(
-                            $requisitos->map(function ($requisito) {
-                                return [
-                                    'requisito_id' => $requisito->id,
-                                    'entregado' => false
-                                ];
-                            })->toArray()
-                        );
+                ->icon('heroicon-o-check-circle')  // O puedes elegir uno de los anteriores
+                ->color('success')
+                ->form([
+                    Forms\Components\Radio::make('decision')
+                        ->label('Seleccione una opción:')
+                        ->options([
+                            'validado' => '✅ Aceptar Solicitud',
+                            'rechazado' => '❌ Rechazar Solicitud',
+                        ])
+                        ->required()
+                        ->inline(false) // muestra en vertical
+                        ->extraAttributes([
+                            'style' => 'display: flex; flex-direction: column; align-items: center; gap: 1rem;',
+                        ]),
+                ])
+                ->action(function (Solicitud $record, array $data) {
+                    $decision = $data['decision'];
+                
+                    if ($decision === 'validado') {
+                        $record->update([
+                            'estado' => 'Validado',
+                        ]);
+                
+                        Notification::make()
+                            ->title('✅ Solicitud Aceptada')
+                            ->success()
+                            ->send();
+                    } elseif ($decision === 'rechazado') {
+                        $record->update([
+                            'estado' => 'Rechazado',
+                        ]);
+                
+                        Notification::make()
+                            ->title('❌ Solicitud Rechazada')
+                            ->danger()
+                            ->send();
                     }
-            
-                    // Redirección con notificación
+                })
+                ->modalHeading('Confirmar decisión')
+                ->modalDescription(function (array $data) {
+                    return match ($data['decision'] ?? null) {
+                        'validado' => '¿Estás seguro de que deseas ✅ **aceptar** esta solicitud?',
+                        'rechazado' => '¿Estás seguro de que deseas ❌ **rechazar** esta solicitud?',
+                        default => 'Confirma tu decisión antes de continuar.',
+                    };
+                })
+                ->modalSubmitActionLabel('Sí, confirmar')
+                ->modalCancelActionLabel('Cancelar')
+                ->requiresConfirmation(),
+                
+                Action::make('notas')
+                ->label('Notas')
+                ->icon('heroicon-o-chat-bubble-left')
+                ->color('blue')
+                ->button()
+                ->modalWidth('xl')
+                ->modalHeading(fn ($record) => "Notas de Solicitud #{$record->id}")
+                ->form([
+                    Forms\Components\Repeater::make('notas_existentes')
+                        ->label('Historial de Notas')
+                        ->schema([
+                            Forms\Components\Textarea::make('mensaje')
+                                ->disabled()
+                                ->columnSpanFull()
+                                ->extraAttributes(['class' => 'bg-gray-50'])
+                                ->formatStateUsing(fn ($state) => $state), // Muestra solo el mensaje
+                        ])
+                        ->dehydrated(false)
+                        ->disabled()
+                        ->collapsible()
+                        ->itemLabel(fn (array $state): ?string => 
+                            isset($state['created_at']) 
+                                ? date('d/m/Y H:i', strtotime($state['created_at'])) // Muestra fecha y hora en el ítem
+                                : null
+                        )
+                        ->default(fn ($record) => $record->observacions()
+                            ->orderBy('created_at', 'desc')
+                            ->get()
+                            ->toArray()
+                        ),
+                        
+                    Forms\Components\Textarea::make('nueva_nota')
+                        ->label('Nueva Nota')
+                        ->placeholder('Escribe aquí tu nota...')
+                        ->required()
+                        ->minLength(5)
+                        ->maxLength(500)
+                        ->columnSpanFull()
+                ])
+                ->action(function (Solicitud $record, array $data) {
+                    $record->observacions()->create([
+                        'mensaje' => $data['nueva_nota'],
+                        'user_id' => auth()->id()
+                    ]);
+                    
                     Notification::make()
-                        ->title('Validación iniciada')
-                        ->body('Se crearon ' . Requisito::count() . ' requisitos para validar')
+                        ->title('Nota agregada correctamente')
+                        ->body('La nota ha sido registrada en el sistema.')
                         ->success()
                         ->send();
-            
-                    return redirect(ValidacionResource::getUrl('index', [
-                        'solicitud_id' => $record->id
-                    ]));
                 })
-                ->requiresConfirmation()
-                ->modalHeading('Validar Solicitud')
-                ->modalDescription('¿Crear registros de validación para los ' . Requisito::count() . ' requisitos?'),
+                ->modalSubmitActionLabel('Guardar Nota')
+                ->modalCancelActionLabel('Cerrar'),
+                
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

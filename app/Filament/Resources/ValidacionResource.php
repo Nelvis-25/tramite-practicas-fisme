@@ -3,18 +3,16 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ValidacionResource\Pages;
-use Illuminate\Support\Facades\Log; 
 use App\Models\Validacion;
 use Filament\Forms;
 use Filament\Forms\Form;
-
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\CheckboxColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\HtmlString;
 
 class ValidacionResource extends Resource
 {
@@ -22,61 +20,67 @@ class ValidacionResource extends Resource
     protected static ?string $navigationGroup = 'Plan de Prácticas';
     protected static ?string $navigationIcon = 'heroicon-o-document-check';
 
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()
-            ->with(['requisito', 'solicitud'])
-            ->where('solicitud_id', request('solicitud_id'));
-    }
-
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('requisito_id')
-                ->disabled()
-                ->label('ID Requisito'),
-            Forms\Components\Toggle::make('entregado')
-                ->label('¿Requisito cumplido?')
-                ->required(),
+            Forms\Components\Repeater::make('validaciones')
+                ->relationship()
+                ->schema([
+                    Forms\Components\Hidden::make('id'),
+                    Forms\Components\TextInput::make('requisito.nombre')
+                        ->label('Requisito')
+                        ->disabled(),
+                    Forms\Components\Toggle::make('entregado')
+                        ->label('Validado')
+                        ->required(),
+                ])
+                ->columns(2)
         ]);
     }
 
     public static function table(Table $table): Table
-    {        return $table
+    {return $table
+        ->query(function () {
+            $solicitud_id = request('solicitud_id');
+            return Validacion::with(['requisito'])
+                ->where('solicitud_id', $solicitud_id)
+                ->orderBy('requisito_id');
+        })
         ->columns([
             TextColumn::make('requisito.nombre')
                 ->label('Requisito'),
                 
             CheckboxColumn::make('entregado')
                 ->label('Validado')
-                ->disabled(false)
-                ->extraAttributes(['style' => 'cursor: pointer; text-align: center'])
+                ->disabled(fn ($record) => $record->entregado)
+                ->extraAttributes(['class' => 'custom-checkbox'])
                 ->afterStateUpdated(function ($record, $state) {
-                    // Guardado directo sin logs
                     $record->update(['entregado' => $state]);
-                    
-                    // Actualización del estado padre (opcional)
-                    if ($record->solicitud) {
-                        $todosValidados = $record->solicitud->validaciones()
-                            ->where('entregado', false)
-                            ->doesntExist();
-                            
-                        $record->solicitud->update([
-                            'estado' => $todosValidados ? 'Validado' : 'Pendiente'
-                        ]);
-                    }
+                    Notification::make()
+                        ->title('Estado actualizado')
+                        ->body("El requisito {$record->requisito->nombre} ha sido " . ($state ? 'validado' : 'marcado como pendiente'))
+                        ->success()
+                        ->send();
+                }),
+        ])
+        ->headerActions([
+            Tables\Actions\Action::make('guardarTodo')
+                ->label('Guardar todo')
+                ->action(function ($livewire) {
+                    $livewire->js('$wire.$refresh()');
                 })
         ])
         ->recordUrl(null)
-        ->actions([]);
-        }
+        ->deferLoading()
+        ->paginated(false);
+    }
 
     public static function getPages(): array
-    {
-        return [
-            'index' => Pages\ListValidacions::route('/'),
-            'create' => Pages\CreateValidacion::route('/create'),
-            'edit' => Pages\EditValidacion::route('/{record}/edit'),
-        ];
-    }
+{
+    return [
+        'index' => Pages\ListValidacions::route('/'),
+        'create' => Pages\CreateValidacion::route('/create'),
+        'edit' => Pages\EditValidacion::route('/{record}/edit'),
+    ];
+}
 }
