@@ -2,30 +2,26 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\SolicitudResource\Pages;
-use App\Filament\Resources\SolicitudResource\RelationManagers;
+use App\Filament\Resources\SolicitudeResource\Pages;
+use App\Filament\Resources\SolicitudeResource\RelationManagers;
+use App\Models\ComisionPermanente;
+use App\Models\PlanPractica;
 use App\Models\Requisito;
-use App\Models\Solicitud;
-use App\Models\Validacion;
-use Filament\Tables\Actions\Action;
+use App\Models\Solicitude;
 use Filament\Forms;
-use Filament\Forms\Components\Livewire;
 use Filament\Forms\Form;
-use Filament\Forms\Set;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Tables\Actions\Action;
 use Filament\Tables;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\HtmlString;
 
-class SolicitudResource extends Resource
+class SolicitudeResource extends Resource
 {
-    protected static ?string $model = Solicitud::class;
+    protected static ?string $model = Solicitude::class;
     protected static ?string $navigationGroup = 'Plan de Prácticas';
-
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function form(Form $form): Form
@@ -37,70 +33,72 @@ class SolicitudResource extends Resource
                     ->maxLength(700),
                 Forms\Components\Select::make('estudiante_id')
                     ->relationship('estudiante', 'nombre')
-                    ->required(),
-
+                    ->required()
+                    ->searchable(),
                 Forms\Components\Select::make('linea_investigacion_id')
                     ->relationship('lineaInvestigacion', 'nombre')
                     ->required(),
-                    Forms\Components\Select::make('asesor_id')
+                Forms\Components\Select::make('asesor_id')
                     ->relationship('asesor', 'nombre')
                     ->required()
                     ->searchable(),
+                Forms\Components\DatePicker::make('fecha_inicio'),
+                Forms\Components\DatePicker::make('fecha_fin'),
                 Forms\Components\FileUpload::make('solicitud')
-                    ->label('Solicitud dirigida al Decano')
-                    ->directory('solicitudes')
-                    ->acceptedFileTypes(['application/pdf'])
-                    ->maxSize(20240)
-                    ->fetchFileInformation(true)
-                    ->downloadable() 
-                    ->openable() 
-                    ->previewable(true) 
-                    ->maxSize(20240),
-                    Forms\Components\FileUpload::make('constancia')
-                    ->label('Constancia de cursos aprobados')
-                    ->directory('constancias')
-                    ->acceptedFileTypes(['application/pdf'])
-                    ->maxSize(20240)
-                    ->fetchFileInformation(true)
-                    ->downloadable() 
-                    ->openable() 
-                    ->previewable(true) 
-                    ->maxSize(20240)
-                    ->moveFiles(),
+                ->label('Solicitud dirigida al Decano')
+                ->directory('solicitudes')
+                ->acceptedFileTypes(['application/pdf'])
+                ->maxSize(20240)
+                ->fetchFileInformation(true)
+                ->downloadable() 
+                ->openable() 
+                ->previewable(true) 
+                ->maxSize(20240),
+                Forms\Components\FileUpload::make('constancia')
+                ->label('Constancia de cursos aprobados')
+                ->directory('constancias')
+                ->acceptedFileTypes(['application/pdf'])
+                ->maxSize(20240)
+                ->fetchFileInformation(true)
+                ->downloadable() 
+                ->openable() 
+                ->previewable(true) 
+                ->maxSize(20240)
+                ->moveFiles(),
                 Forms\Components\FileUpload::make('informe')
-                    ->label('Plan de Prácticas ')
-                    ->directory('informes')
-                    ->acceptedFileTypes(['application/pdf'])
-                    ->maxSize(20240)
-                    ->fetchFileInformation(true)
-                    ->downloadable() 
-                    ->openable() 
-                    ->previewable(true) 
-                    ->maxSize(20240),
+                ->label('Plan de Prácticas ')
+                ->directory('informes')
+                ->acceptedFileTypes(['application/pdf'])
+                ->maxSize(20240)
+                ->fetchFileInformation(true)
+                ->downloadable() 
+                ->openable() 
+                ->previewable(true) 
+                ->maxSize(20240),
                 Forms\Components\FileUpload::make('carta_presentacion')
-                    ->label('Carta de autorización emitida por la Empresa. ')
-                    ->directory('cartas_presentacion') 
-                    ->acceptedFileTypes(['application/pdf'])
-                    ->maxSize(20240)
-                    ->fetchFileInformation(true)
-                    ->downloadable() 
-                    ->openable() 
-                    ->previewable(true) 
-                    ->maxSize(20240),
-                    Forms\Components\FileUpload::make('comprobante_pago')
-                    ->directory('comprobantes_pago')
-                    ->acceptedFileTypes([ 'image/*'])
-                    ->maxSize(20240)
-                    ->fetchFileInformation(true)
-                    ->downloadable() 
-                    ->openable() 
-                    ->previewable(true) 
-                    ->maxSize(20240),
+                ->label('Carta de autorización emitida por la Empresa. ')
+                ->directory('cartas_presentacion') 
+                ->acceptedFileTypes(['application/pdf'])
+                ->maxSize(20240)
+                ->fetchFileInformation(true)
+                ->downloadable() 
+                ->openable() 
+                ->previewable(true) 
+                ->maxSize(20240),
+                Forms\Components\FileUpload::make('comprobante_pago')
+                ->directory('comprobantes_pago')
+                ->acceptedFileTypes([ 'image/*'])
+                ->maxSize(20240)
+                ->fetchFileInformation(true)
+                ->downloadable() 
+                ->openable() 
+                ->previewable(true) 
+                ->maxSize(20240),
                 Forms\Components\TextInput::make('estado')
-                    ->required()
-                    ->default('Pendiente') 
-                    ->disabled() 
-                    ->dehydrated(false),
+                ->required()
+                ->default('Pendiente') 
+                ->disabled() 
+                ->dehydrated(false),
             ]);
     }
 
@@ -109,29 +107,39 @@ class SolicitudResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nombre')
+                ->label('Nombre del plan de prácticas')
+                ->extraAttributes([
+                    'style' => 'width: 300px; word-wrap: break-word; white-space: normal;text-align: justify;',
+                ])
                     ->searchable(),
                 Tables\Columns\TextColumn::make('estudiante.nombre')
-                    
-                    ->searchable(),
+                    ->numeric()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('lineaInvestigacion.nombre')
-                    
-                    ->searchable(),
+                    ->numeric()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('asesor.nombre')
                     ->label('Asesor')
-                    
-                    ->searchable(),
-                    
-                    Tables\Columns\TextColumn::make('solicitud')
-                        ->label('Solicitud al decano')
-                        ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')
-                        ->url(function ($record) {
-                            if (!$record->solicitud) return null;
-                            return asset('storage/'.str_replace('storage/', '', $record->solicitud));
-                        })
-                        ->openUrlInNewTab()
-                        ->icon('heroicon-o-document-text'),
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('fecha_inicio')
+                    ->date()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('fecha_fin')
+                    ->date()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('solicitud')
+                ->label('Solicitud al decano')
+                ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')
+                ->url(function ($record) {
+                    if (!$record->solicitud) return null;
+                    return asset('storage/'.str_replace('storage/', '', $record->solicitud));
+                })
+                ->openUrlInNewTab()
+                ->icon('heroicon-o-document-text'),
+
                 Tables\Columns\TextColumn::make('constancia')
-                        ->label('Constancia de cursos aprobados')
+                   ->label('Constancia de cursos aprobados')
                         ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')
                         ->url(function ($record) {
                             if (!$record->constancia) return null;
@@ -140,8 +148,9 @@ class SolicitudResource extends Resource
                             ->searchable()
                             ->openUrlInNewTab()
                             ->icon('heroicon-o-document-text'),
+
                 Tables\Columns\TextColumn::make('informe')
-                ->label('Plan de Prácticas')
+                   ->label('Plan de Prácticas')
                 ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')
                 ->url(function ($record) {
                     if (!$record->informe) return null;
@@ -152,7 +161,7 @@ class SolicitudResource extends Resource
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('carta_presentacion')
-                ->label('Carta de autorización')
+                   ->label('Carta de autorización')
                 ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')
                 ->url(function ($record) {
                     if (!$record->carta_presentacion) return null;
@@ -161,7 +170,6 @@ class SolicitudResource extends Resource
                 ->openUrlInNewTab()
                 ->icon('heroicon-o-document-text')
                     ->searchable(),
-
                 Tables\Columns\TextColumn::make('comprobante_pago')
                 ->label('Comprobante de pago')
                 ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')
@@ -172,18 +180,19 @@ class SolicitudResource extends Resource
                 ->openUrlInNewTab()
                 ->icon('heroicon-o-document-text')
                     ->searchable(),
-                    Tables\Columns\TextColumn::make('estado')
-                    ->label('Estado')
+
+                Tables\Columns\TextColumn::make('estado')
+                ->label('Estado')
                     ->searchable()
                     ->html()
                     ->formatStateUsing(function ($state) {
                         // Definir el color según el estado
                         if ($state == 'Pendiente') {
-                            return "<span style='color: #f59e0b; font-weight: bold;'>$state</span>"; // naranja
+                            return "<span style='color: #f59e0b; font-weight: bold;'>$state</span>"; 
                         } elseif ($state == 'Validado') {
-                            return "<span style='color: #10b981; font-weight: bold;'>$state</span>"; // verde esmeralda
+                            return "<span style='color: #10b981; font-weight: bold;'>$state</span>"; 
                         } elseif ($state == 'Rechazado') {
-                            return "<span style='color: #ef4444; font-weight: bold;'>$state</span>"; // rojo fuerte
+                            return "<span style='color: #ef4444; font-weight: bold;'>$state</span>"; 
                         }
                         return $state;
                     }),
@@ -196,7 +205,6 @@ class SolicitudResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            
             ->filters([
                 //
             ])
@@ -205,22 +213,34 @@ class SolicitudResource extends Resource
                 Tables\Actions\EditAction::make(),
                 Action::make('Validar')
                 ->label('Validar')
-                ->icon('heroicon-o-check-circle')  // O puedes elegir uno de los anteriores
+                ->icon('heroicon-o-check-circle')  
                 ->color('success')
                 ->form([
+                Forms\Components\Placeholder::make('lista_requisitos')
+                    ->label('Requisitos registrados')
+                    ->content(function () {
+                        return Requisito::all()
+                            ->pluck('nombre')
+                            ->map(fn($item) => '• ' . trim($item)) // eliminamos espacios extra
+                            ->implode("\n");
+                    })
+                    ->extraAttributes([
+                        'style' => 'white-space: pre-wrap; line-height: 1.5; font-family: sans-serif;',
+                    ]),
+
                     Forms\Components\Radio::make('decision')
                         ->label('Seleccione una opción:')
                         ->options([
-                            'validado' => '✅ Aceptar Solicitud',
-                            'rechazado' => '❌ Rechazar Solicitud',
+                            'validado' => ' Aceptar Solicitud',
+                            'rechazado' => ' Rechazar Solicitud',
                         ])
                         ->required()
-                        ->inline(false) // muestra en vertical
+                        ->inline(false) 
                         ->extraAttributes([
                             'style' => 'display: flex; flex-direction: column; align-items: center; gap: 1rem;',
                         ]),
                 ])
-                ->action(function (Solicitud $record, array $data) {
+                ->action(function (Solicitude $record, array $data) {
                     $decision = $data['decision'];
                 
                     if ($decision === 'validado') {
@@ -229,7 +249,7 @@ class SolicitudResource extends Resource
                         ]);
                 
                         Notification::make()
-                            ->title('✅ Solicitud Aceptada')
+                            ->title(' Solicitud Aceptada')
                             ->success()
                             ->send();
                     } elseif ($decision === 'rechazado') {
@@ -238,7 +258,7 @@ class SolicitudResource extends Resource
                         ]);
                 
                         Notification::make()
-                            ->title('❌ Solicitud Rechazada')
+                            ->title('Solicitud Rechazada')
                             ->danger()
                             ->send();
                     }
@@ -246,20 +266,20 @@ class SolicitudResource extends Resource
                 ->modalHeading('Confirmar decisión')
                 ->modalDescription(function (array $data) {
                     return match ($data['decision'] ?? null) {
-                        'validado' => '¿Estás seguro de que deseas ✅ **aceptar** esta solicitud?',
-                        'rechazado' => '¿Estás seguro de que deseas ❌ **rechazar** esta solicitud?',
+                        'validado' => '¿Estás seguro de que deseas  **aceptar** esta solicitud?',
+                        'rechazado' => '¿Estás seguro de que deseas  **rechazar** esta solicitud?',
                         default => 'Confirma tu decisión antes de continuar.',
                     };
                 })
                 ->modalSubmitActionLabel('Sí, confirmar')
                 ->modalCancelActionLabel('Cancelar')
-                ->requiresConfirmation(),
+                ->requiresConfirmation()
                 
+                ,
                 Action::make('notas')
-                ->label('Notas')
+                ->label('Observacion')
                 ->icon('heroicon-o-chat-bubble-left')
-                ->color('blue')
-                ->button()
+                
                 ->modalWidth('xl')
                 ->modalHeading(fn ($record) => "Notas de Solicitud #{$record->id}")
                 ->form([
@@ -269,7 +289,7 @@ class SolicitudResource extends Resource
                             Forms\Components\Textarea::make('mensaje')
                                 ->disabled()
                                 ->columnSpanFull()
-                                ->extraAttributes(['class' => 'bg-gray-50'])
+                                ->extraAttributes(['class' => 'bg-black-500'])
                                 ->formatStateUsing(fn ($state) => $state), // Muestra solo el mensaje
                         ])
                         ->dehydrated(false)
@@ -294,7 +314,7 @@ class SolicitudResource extends Resource
                         ->maxLength(500)
                         ->columnSpanFull()
                 ])
-                ->action(function (Solicitud $record, array $data) {
+                ->action(function (Solicitude $record, array $data) {
                     $record->observacions()->create([
                         'mensaje' => $data['nueva_nota'],
                         'user_id' => auth()->id()
@@ -308,15 +328,55 @@ class SolicitudResource extends Resource
                 })
                 ->modalSubmitActionLabel('Guardar Nota')
                 ->modalCancelActionLabel('Cerrar'),
+
+                Action::make('Asignar Jurado')
+                ->label('Asignar Jurado')
+                ->icon('heroicon-o-user-group')
+                ->requiresConfirmation()
+                ->color('primary')
+                //->visible(fn ($record) => $record->estado === 'Pendiente')  // Si deseas que siempre sea visible, eliminar esta línea
+                ->action(function ($record) {
+                    // Verificar si ya existe un Plan de Prácticas
+                    $existePlan = PlanPractica::where('solicitude_id', $record->id)->exists();
+            
+                    // Si ya existe un plan, no lo creamos de nuevo pero actualizamos el estado
+                    if ($existePlan) {
+                        // Solo actualizamos el estado de la solicitud a 'Asignado'
+                        $record->update([
+                            'estado' => 'Asignado',
+                        ]);
+                    } else {
+                        // Si no existe, creamos el Plan de Prácticas
+                        $comisionActiva = ComisionPermanente::where('estado', true)
+                            ->where('fecha_fin', '>', now())
+                            ->first();
+            
+                        if (!$comisionActiva) {
+                            throw new \Exception("No hay comisión activa disponible.");
+                        }
+            
+                        // Crear el Plan de Práctica
+                        PlanPractica::create([
+                            'solicitude_id' => $record->id,
+                            'comision_permanente_id' => $comisionActiva->id,
+                            'estado' => 'Asignado',
+                        ]);
+            
+                        // Actualizar el estado de la solicitud
+                        $record->update([
+                            'estado' => 'Asignado',
+                        ]);
+                    }
+                })
+               
                 
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
-            
-            
     }
 
     public static function getRelations(): array
@@ -329,9 +389,9 @@ class SolicitudResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListSolicituds::route('/'),
-            'create' => Pages\CreateSolicitud::route('/create'),
-            'edit' => Pages\EditSolicitud::route('/{record}/edit'),
+            'index' => Pages\ListSolicitudes::route('/'),
+            'create' => Pages\CreateSolicitude::route('/create'),
+            'edit' => Pages\EditSolicitude::route('/{record}/edit'),
         ];
     }
 }

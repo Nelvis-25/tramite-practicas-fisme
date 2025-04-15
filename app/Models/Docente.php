@@ -44,8 +44,5 @@ class Docente extends Model
     {
         return $this->hasMany(IntegranteComision::class);
     }
-    public function solicitud(): HasMany
-    {
-        return $this->hasMany(Solicitud::class);
-    }
+
 }

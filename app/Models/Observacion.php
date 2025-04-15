@@ -9,10 +9,15 @@ class Observacion extends Model
 { 
     use HasFactory;
     protected $table = 'observacions';
-    protected $fillable = ['solicitud_id', 'mensaje'];
+    protected $fillable = ['solicitude_id', 'mensaje'];
     
     public function solicitud()
     {
         return $this->belongsTo(Solicitud::class);
     }
+    public function solicitude()
+    {
+        return $this->belongsTo(Solicitude::class);
+    }
+    
 }

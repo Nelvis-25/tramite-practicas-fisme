@@ -17,9 +17,9 @@ class TipoEstudianteResource extends Resource
 {
     protected static ?string $model = TipoEstudiante::class;
 
-    protected static ?string $navigationLabel = 'Tipos';
+    protected static ?string $navigationLabel = 'Tipos estudiante';
     protected static ?string $label = 'tipo';
-    protected static ?string $pluralLabel = 'Tipos';
+    protected static ?string $pluralLabel = 'Tipos de estudiante';
 
     protected static ?string $navigationGroup = 'Estudiante';
     //protected static ?int $navigationSort = 1;

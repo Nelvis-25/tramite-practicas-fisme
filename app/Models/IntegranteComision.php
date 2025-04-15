@@ -23,6 +23,7 @@ class IntegranteComision extends Model
     return $this->belongsTo(Docente::class);
 }
 
+
     public function comisionPermanente()
     {
         return $this->belongsTo(ComisionPermanente::class);

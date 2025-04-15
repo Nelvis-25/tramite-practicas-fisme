@@ -6,14 +6,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Solicitud extends Model
+class Solicitude extends Model
 {
     use HasFactory;
+    protected $table = 'solicitudes';
     protected $fillable = [
         'nombre',
         'estudiante_id',
         'linea_investigacion_id',
         'asesor_id',
+        'fecha_inicio',
+        'fecha_fin',
         'solicitud',
         'constancia',
         'informe',
@@ -24,11 +27,8 @@ class Solicitud extends Model
     protected $attributes = [
         'estado' => 'Pendiente',
     ];
-    public function planDePractica()
-    {
-        return $this->hasOne(PlanDePractica::class, 'solicitud_id');
-    }
-     public function estudiante(): BelongsTo
+    
+    public function estudiante(): BelongsTo
     {
         return $this->belongsTo(Estudiante::class);
     }
@@ -40,28 +40,26 @@ class Solicitud extends Model
     {
         return $this->belongsTo(Docente::class);
     }
-    public function observacions()
-{
-    return $this->hasMany(Observacion::class)->latest();
-}
-    public function validaciones()
-    {
-        return $this->hasMany(Validacion::class);
-    }  
 
-public function requisitos()
-{
-    return $this->belongsToMany(Requisito::class, 'validacions');
-}
- 
-protected static function boot()
-{
-    parent::boot();
+    public function requisito(): BelongsTo
+    {
+        return $this->belongsTo(Requisito::class);
+    }
+    public function observacions()
+    {
+        return $this->hasMany(Observacion::class)->latest();
+    }
+    public function requisitos()
+    {
+        return $this->belongsToMany(Requisito::class, 'validacions');
+    }
+    protected static function boot()
+    {
+        parent::boot();
     
-    static::updated(function ($solicitud) {
-        if ($solicitud->validaciones()->where('entregado', false)->doesntExist()) {
-            $solicitud->update(['estado' => 'Validado']);
-        }
-    });
-}
+        static::updated(function ($solicitude) {
+            // Si el estado de la solicitud es 'Validado' o 'Rechazado', actualizar el estado.
+            
+        });
+    }
 }

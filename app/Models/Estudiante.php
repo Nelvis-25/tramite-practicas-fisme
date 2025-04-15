@@ -40,7 +40,10 @@ class Estudiante extends Model
     {
         return $this->belongsTo(Solicitud::class);
     }
-    
+    public function solicitude(): BelongsTo
+    {
+        return $this->belongsTo(Solicitude::class);
+    }
     
     public function user(): BelongsTo
     {
