@@ -15,12 +15,23 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class EstudianteResource extends Resource
 {
+    public static function getEloquentQuery(): Builder
+{
+    $query = parent::getEloquentQuery();
+
+    // Verificar que haya un usuario autenticado antes de llamar a hasRole
+    if (auth()->check() && auth()->user()->hasRole('Estudiante')) {
+        return $query->where('user_id', auth()->id());
+    }
+
+    return $query;
+}
     protected static ?string $model = Estudiante::class;
     protected static ?string $navigationGroup = 'Estudiante';
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
 
-
+     
     public static function form(Form $form): Form
     {
         return $form
@@ -144,5 +155,10 @@ class EstudianteResource extends Resource
             'create' => Pages\CreateEstudiante::route('/create'),
             'edit' => Pages\EditEstudiante::route('/{record}/edit'),
         ];
+   
+   
     }
+
 }
+
+

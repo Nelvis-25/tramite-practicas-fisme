@@ -88,5 +88,7 @@ return [
     'register_role_policy' => [
         'enabled' => true,
     ],
-
+     // Aquí es donde debes agregar los roles y permisos
+    
+   
 ];

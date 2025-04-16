@@ -3,6 +3,9 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+/**
+ * @method bool hasRole(string|array $roles)
+ */
 
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Models\Contracts\FilamentUser;
@@ -10,17 +13,22 @@ use Filament\Models\Contracts\HasAvatar;
 use Filament\Tables\Columns\Layout\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+/**
+ * @method bool hasRole(string|array $roles)
+ */
 
 class User extends Authenticatable implements  HasAvatar
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, HasPanelShield;
+    use HasRoles;
+    use HasApiTokens, HasFactory, Notifiable,  HasPanelShield;
 
-
+     protected $table = 'users';
     /**
      * The attributes that are mass assignable.
      *
@@ -59,9 +67,9 @@ class User extends Authenticatable implements  HasAvatar
         return $this->foto_perfil ? Storage::url($this->foto_perfil) : null;
     }
 
-    public function estudiante():HasMany{
-        
-        return $this->hasMany(Estudiante::class);
+
+    public function estudiante(): HasOne {
+        return $this->hasOne(Estudiante::class);
     }
     public function canAccessPanel(Panel $panel): bool
     {

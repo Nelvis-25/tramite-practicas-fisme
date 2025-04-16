@@ -36,10 +36,11 @@ class Estudiante extends Model
     {
         return $this->belongsTo(TipoEstudiante::class);
     }
-    public function solicitud(): BelongsTo
-    {
-        return $this->belongsTo(Solicitud::class);
-    }
+    public function scopeDeUsuario($query, $userId)
+{
+    return $query->where('user_id', $userId);
+}
+
     public function solicitude(): BelongsTo
     {
         return $this->belongsTo(Solicitude::class);
