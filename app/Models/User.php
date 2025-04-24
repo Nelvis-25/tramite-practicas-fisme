@@ -20,8 +20,11 @@ use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 /**
- * @method bool hasRole(string|array $roles)
+ * @method bool hasRole(string $role)
+ * @method bool hasAnyRole(array|string $roles)
+ * @method bool hasPermissionTo(string $permission)
  */
+
 
 class User extends Authenticatable implements  HasAvatar
 {

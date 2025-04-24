@@ -5,13 +5,17 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\EstudianteResource\Pages;
 use App\Filament\Resources\EstudianteResource\RelationManagers;
 use App\Models\Estudiante;
+use App\Models\TipoEstudiante;
+use Closure;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class EstudianteResource extends Resource
 {
@@ -19,13 +23,27 @@ class EstudianteResource extends Resource
 {
     $query = parent::getEloquentQuery();
 
-    // Verificar que haya un usuario autenticado antes de llamar a hasRole
-    if (auth()->check() && auth()->user()->hasRole('Estudiante')) {
-        return $query->where('user_id', auth()->id());
+    /** @var User $user */
+    $user = auth()->user();
+
+    if ($user && $user->hasRole('Estudiante')) {
+        return $query->where('user_id', $user->id);
     }
 
     return $query;
 }
+public static function canCreate(): bool
+{
+    $user = auth()->user();
+     /** @var User $user */
+    if ($user && $user->hasRole('Estudiante')) {
+        
+        return !Estudiante::where('user_id', $user->id)->exists();
+    }
+
+    return true; 
+}
+
     protected static ?string $model = Estudiante::class;
     protected static ?string $navigationGroup = 'Estudiante';
 
@@ -34,6 +52,8 @@ class EstudianteResource extends Resource
      
     public static function form(Form $form): Form
     {
+        $user = Auth::user();
+        /** @var \App\Models\User $user */
         return $form
             ->schema([
                 Forms\Components\TextInput::make('nombre')
@@ -46,8 +66,14 @@ class EstudianteResource extends Resource
                     ->required()
                     ->maxLength(10),
                 Forms\Components\Select::make('tipo_estudiante_id')
-                    ->relationship('tipoEstudiante', 'nombre')
-                    ->required(),
+                    ->relationship('tipoEstudiante', 'nombre') 
+                    ->required()
+                    ->reactive() 
+                    ->preload(),
+                    Forms\Components\TextInput::make('telefono')
+                    ->tel()
+                    ->required()
+                    ->maxLength(9),
                 Forms\Components\Select::make('ciclo')
                    
                     ->options([
@@ -55,8 +81,13 @@ class EstudianteResource extends Resource
                         'VIII' => 'Ciclo VIII', 
                         'IX' => 'Ciclo IX',
                         'X' => 'Ciclo X',
-                    ]),
-                    
+                    ])
+                    ->disabled(function (callable $get) {
+                        $tipo = \App\Models\TipoEstudiante::find($get('tipo_estudiante_id'));
+                        return $tipo && $tipo->nombre === 'Egresado'; 
+                    })
+                  ,
+                                    
                 Forms\Components\TextInput::make('facultad')
                     ->required()
                     ->maxLength(250),
@@ -68,26 +99,36 @@ class EstudianteResource extends Resource
                         'Ingeniería de Biosistemas' => 'Ingeniería de Biosistemas'
                         
                     ]),
-                Forms\Components\TextInput::make('telefono')
-                    ->tel()
-                    ->required()
-                    ->maxLength(9),
-                Forms\Components\TextInput::make('email')
+               
+                    Forms\Components\TextInput::make('email')
                     ->email()
                     ->required()
-                    ->maxLength(125),
+                    ->maxLength(125)
+                    ->disabled()
+                    ->dehydrated()
+                    ->reactive()
+                    ->default(function () use ($user) {
+                        return $user?->hasRole('Estudiante') ? $user->email : null;
+                    }),
+                
                 Forms\Components\TextInput::make('direccion')
                     ->maxLength(250),
                 Forms\Components\Toggle::make('estado')
                     ->required()
                     ->default(true),
-                Forms\Components\Select::make('user_id')
+                    Forms\Components\Select::make('user_id')
                     ->relationship('user', 'name')
                     ->required()
                     ->searchable()
                     ->preload()
-                    ,
-                    
+                    ->default(fn () => $user?->hasRole('Estudiante') ? $user->id : null)
+                    ->disabled(fn () => $user?->hasRole('Estudiante'))
+                    ->live()
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        $userEmail = \App\Models\User::find($state)?->email;
+                        $set('email', $userEmail);
+                    }),
+                
             ]);
     }
 
@@ -116,9 +157,7 @@ class EstudianteResource extends Resource
                     ->searchable(),
                 Tables\Columns\IconColumn::make('estado')
                     ->boolean(),
-                Tables\Columns\TextColumn::make('user.name')
-                    ->numeric()
-                    ->sortable(),
+                
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

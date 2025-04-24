@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Estudiante extends Model
 {
@@ -41,10 +43,10 @@ class Estudiante extends Model
     return $query->where('user_id', $userId);
 }
 
-    public function solicitude(): BelongsTo
-    {
-        return $this->belongsTo(Solicitude::class);
-    }
+public function solicitude(): HasOne
+{
+    return $this->hasOne(Solicitude::class);
+}
     
     public function user(): BelongsTo
     {

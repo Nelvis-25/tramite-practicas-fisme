@@ -37,9 +37,38 @@ class PlanPractica extends Model
     {
         return $this->belongsTo(Docente::class, 'docente_id');
     }
+    public function evaluaciones()
+    {
+        return $this->hasMany(EvaluacionPlanDePractica::class);
+    }
+
     public function tipoEstudiante()
     {
         return $this->belongsTo(TipoEstudiante::class);
     }
-    
+
+   
+    protected static function booted()
+            {
+                static::created(function ($planPractica) {
+                    $integrantes = IntegranteComision::where('comision_permanente_id', $planPractica->comision_permanente_id)->get();
+                    foreach ($integrantes as $integrante) {
+                        $yaExiste = EvaluacionPlanDePractica::where('plan_practica_id', $planPractica->id)
+                            ->where('integrante_comision_id', $integrante->id)
+                            ->exists();
+
+                        if (!$yaExiste) {
+                            EvaluacionPlanDePractica::create([
+                                'plan_practica_id' => $planPractica->id,
+                                'integrante_comision_id' => $integrante->id,
+                                'estado' => 'Pendiente',
+                                'observacion' => null,
+                                'activo' => false,
+                                
+                            ]);
+                        }
+                    }
+                });
+            }
+
 }

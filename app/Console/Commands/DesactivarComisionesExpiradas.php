@@ -1,23 +1,36 @@
 <?php
 
 namespace App\Console\Commands;
+
+use Illuminate\Console\Command;
 use App\Models\ComisionPermanente;
 use Carbon\Carbon;
-use Illuminate\Console\Command;
 
 class DesactivarComisionesExpiradas extends Command
 {
-    protected $signature = 'comisiones:desactivar';
-    protected $description = 'Desactiva comisiones al llegar a su fecha fin';
+    protected $signature = 'comisiones:desactivar-expiradas';
+
+    protected $description = 'Desactiva automáticamente las comisiones cuyo periodo ya ha expirado.';
 
     public function handle()
     {
-        $hoy = Carbon::today();
-        
-        ComisionPermanente::where('estado', true)
-            ->whereDate('fecha_fin', '<=', $hoy)
-            ->update(['estado' => false]);
-        
-        $this->info('Comisiones expiradas desactivadas: ' . $hoy->format('d/m/Y'));
+        $hoy = Carbon::now();
+
+        $comisiones = ComisionPermanente::where('estado', true)
+            ->where('fecha_fin', '<', $hoy)
+            ->get();
+
+        if ($comisiones->isEmpty()) {
+            $this->info('No hay comisiones vencidas que desactivar.');
+            return;
+        }
+
+        foreach ($comisiones as $comision) {
+            $comision->estado = false;
+            $comision->save();
+        }
+
+        $this->info('Se desactivaron ' . $comisiones->count() . ' comisiones vencidas.');
     }
+  
 }

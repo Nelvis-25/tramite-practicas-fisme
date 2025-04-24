@@ -45,5 +45,6 @@ class IntegranteComision extends Model
         }
     });
 }
+// desde aca agrege si boras solo boras esto nada mas 
 
 }

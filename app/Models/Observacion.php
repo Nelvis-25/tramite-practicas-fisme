@@ -11,10 +11,7 @@ class Observacion extends Model
     protected $table = 'observacions';
     protected $fillable = ['solicitude_id', 'mensaje'];
     
-    public function solicitud()
-    {
-        return $this->belongsTo(Solicitud::class);
-    }
+    
     public function solicitude()
     {
         return $this->belongsTo(Solicitude::class);

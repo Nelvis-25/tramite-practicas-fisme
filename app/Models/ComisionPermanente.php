@@ -18,8 +18,8 @@ class ComisionPermanente extends Model
     ];
 
     protected $casts = [
-        'fecha_inicio' => 'datetime:Y-m-d',
-        'fecha_fin' => 'datetime:Y-m-d',
+        'fecha_inicio' => 'date:Y-m-d',
+        'fecha_fin' => 'date:Y-m-d',
         'estado' => 'boolean'
     ];
 
@@ -29,20 +29,16 @@ class ComisionPermanente extends Model
 
         static::saving(function ($model) {
             $now = Carbon::now();
-
-            // 1. Auto-desactivar si la fecha fin es pasada
             if ($model->fecha_fin && $model->fecha_fin->lt($now)) {
                 $model->estado = false;
-                return; // Salir temprano para evitar validaciones innecesarias
+                return;
             }
 
-            // 2. Validación inteligente para comisiones activas
             if ($model->estado) {
                 $query = self::query()
                     ->where('estado', true)
                     ->where('fecha_fin', '>', $now);
                 
-                // Excluir el registro actual SI es una edición
                 if ($model->exists) {
                     $query->where('id', '!=', $model->id);
                 }
@@ -51,7 +47,7 @@ class ComisionPermanente extends Model
                     throw new \Exception(
                         $model->exists
                             ? 'No puede tener dos comisiones activas simultáneamente.'
-                            : 'Ya existe una comisión activa. Desactívela primero.'
+                            : 'Ya existe una comisión activa. Desactívela primero .'
                     );
                 }
             }
@@ -68,5 +64,6 @@ class ComisionPermanente extends Model
     {
         return $this->hasMany(IntegranteComision::class);
     }
+    // esto boras esto agrege : 
     
 }

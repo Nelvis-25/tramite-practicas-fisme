@@ -28,13 +28,16 @@ class ComisionPermanenteResource extends Resource
     return $form
         ->schema([
             Forms\Components\TextInput::make('nombre')
+                ->label('Nombre de la comisión permanente')
                 ->required()
                 ->maxLength(150),
                 
             Forms\Components\DatePicker::make('fecha_inicio')
+                ->label('Fecha de inicio')
                 ->required(),
                 
                 Forms\Components\DatePicker::make('fecha_fin')
+                ->label('Fecha de fin')
                     ->required()
                     ->minDate(fn ($get) => $get('fecha_inicio'))
                     ->rules([

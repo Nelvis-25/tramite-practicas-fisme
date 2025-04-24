@@ -92,4 +92,5 @@ class AdminPanelProvider extends PanelProvider
             
             
     }
+    
 }

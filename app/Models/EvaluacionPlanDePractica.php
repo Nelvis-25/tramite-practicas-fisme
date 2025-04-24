@@ -1,0 +1,85 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class EvaluacionPlanDePractica extends Model
+{
+    use HasFactory;
+    protected $table = 'evaluacion_plan_de_practicas';
+
+    protected $fillable = [
+       
+        'plan_practica_id',
+        'docente_id',
+        'integrante_comision_id',
+        'estado',
+        'observacion',
+        'activo',
+    ];
+    protected $casts = [
+        'activo' => 'boolean',
+    ];
+
+    public function planPractica(): BelongsTo
+    {
+        return $this->belongsTo(PlanPractica::class);
+    }
+    public function integranteComision()
+    {
+        return $this->belongsTo(IntegranteComision::class);
+    }
+
+    // Acceder al docente relacionado a través de Integrante_Comision
+    public function docente()
+    {
+        return $this->belongsTo(Docente::class);
+    }
+ 
+    protected static function booted()
+    {
+        static::updated(function ($evaluacion) {
+            // Solo si el estado ya no está en Pendiente
+            if (!in_array($evaluacion->estado, ['Aprobado', 'Observado', 'Desaprobado'])) {
+                return;
+            }
+
+            $evaluacion->actualizarEstadoPlanPadre();
+        });
+    }
+
+    public function actualizarEstadoPlanPadre()
+    {
+        $plan = $this->planPractica;
+
+        // Obtener evaluaciones que ya fueron completadas (no pendientes)
+        $evaluacionesCompletadas = $plan->evaluaciones()
+            ->whereIn('estado', ['Aprobado', 'Observado', 'Desaprobado'])
+            ->get();
+
+        if ($evaluacionesCompletadas->count() < 3) {
+            return; // Aún no hay 3 evaluaciones => no hacer nada
+        }
+
+        // Determinar el nuevo estado del plan
+        if ($evaluacionesCompletadas->contains('estado', 'Desaprobado')) {
+            $nuevoEstado = 'Desaprobado';
+        } elseif ($evaluacionesCompletadas->contains('estado', 'Observado')) {
+            $nuevoEstado = 'Observado';
+        } else {
+            $nuevoEstado = 'Aprobado';
+        }
+
+        // ✅ Actualizar el estado del plan
+        $plan->updateQuietly(['estado' => $nuevoEstado]);
+
+        // ✅ Eliminar automáticamente las evaluaciones pendientes (como la del Accesitario)
+        $plan->evaluaciones()
+            ->where('estado', 'Pendiente')
+            ->delete();
+    }
+
+}

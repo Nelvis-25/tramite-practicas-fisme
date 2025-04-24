@@ -22,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Registra el componente Livewire
-        Livewire::component('notas-solicitud', NotasSolicitud::class);
+        //Livewire::component('notas-solicitud', NotasSolicitud::class);
         
         // Elimina esto si no lo necesitas
         // $this->registerObservers();

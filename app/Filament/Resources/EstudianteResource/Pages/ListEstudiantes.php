@@ -16,4 +16,6 @@ class ListEstudiantes extends ListRecords
             Actions\CreateAction::make(),
         ];
     }
+      
+    
 }

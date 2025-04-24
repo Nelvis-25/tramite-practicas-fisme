@@ -23,6 +23,36 @@ class SolicitudeResource extends Resource
     protected static ?string $model = Solicitude::class;
     protected static ?string $navigationGroup = 'Plan de Prácticas';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+    
+        /** @var User $user */
+        $user = auth()->user();
+    
+        if ($user && $user->hasRole('Estudiante')) {
+            $estudiante = \App\Models\Estudiante::where('user_id', $user->id)->first();
+    
+            if ($estudiante) {
+                return $query->where('estudiante_id', $estudiante->id);
+            }
+    
+            
+            return $query->whereRaw('0 = 1');
+        }
+    
+        return $query;
+    }
+    public static function canCreate(): bool
+    {
+        $user = auth()->user();
+    /** @var User $user */
+        if ($user && $user->hasRole('Estudiante')) {
+            return !optional($user->estudiante)->solicitude()->exists();
+        }
+    
+        return true;
+    }
 
     public static function form(Form $form): Form
     {
@@ -274,7 +304,12 @@ class SolicitudeResource extends Resource
                 ->modalSubmitActionLabel('Sí, confirmar')
                 ->modalCancelActionLabel('Cancelar')
                 ->requiresConfirmation()
+                ->visible(function () {
+                    /** @var \App\Models\User $user */
+                    $user = auth()->user();
                 
+                    return !$user?->hasRole('Estudiante');
+                })
                 ,
                 Action::make('notas')
                 ->label('Observacion')
@@ -334,42 +369,62 @@ class SolicitudeResource extends Resource
                 ->icon('heroicon-o-user-group')
                 ->requiresConfirmation()
                 ->color('primary')
-                //->visible(fn ($record) => $record->estado === 'Pendiente')  // Si deseas que siempre sea visible, eliminar esta línea
                 ->action(function ($record) {
-                    // Verificar si ya existe un Plan de Prácticas
+            
+                    // ✅ Validar que la solicitud esté en estado 'Validado'
+                    if ($record->estado !== 'Validado') {
+                        Notification::make()
+                            ->title('No se puede asignar jurado')
+                            ->body('No se pudo asignar una comisión debido a que esta solicitud aún no ha sido revisada o validada.')
+                            ->danger()
+                            ->send();
+            
+                        return; // Importante: salir de la acción
+                    }
+            
                     $existePlan = PlanPractica::where('solicitude_id', $record->id)->exists();
             
-                    // Si ya existe un plan, no lo creamos de nuevo pero actualizamos el estado
                     if ($existePlan) {
-                        // Solo actualizamos el estado de la solicitud a 'Asignado'
                         $record->update([
                             'estado' => 'Asignado',
                         ]);
                     } else {
-                        // Si no existe, creamos el Plan de Prácticas
                         $comisionActiva = ComisionPermanente::where('estado', true)
                             ->where('fecha_fin', '>', now())
                             ->first();
             
                         if (!$comisionActiva) {
-                            throw new \Exception("No hay comisión activa disponible.");
+                            Notification::make()
+                                ->title('Sin comisión activa')
+                                ->body('No hay comisión activa disponible para asignar.')
+                                ->danger()
+                                ->send();
+            
+                            return;
                         }
             
-                        // Crear el Plan de Práctica
                         PlanPractica::create([
                             'solicitude_id' => $record->id,
                             'comision_permanente_id' => $comisionActiva->id,
                             'estado' => 'Asignado',
                         ]);
             
-                        // Actualizar el estado de la solicitud
                         $record->update([
                             'estado' => 'Asignado',
                         ]);
                     }
+            
+                    // ✅ Notificación de éxito (opcional)
+                    Notification::make()
+                        ->title('Jurado asignado correctamente')
+                        ->success()
+                        ->send();
                 })
-               
-                
+                ->visible(function () {
+                    $user = auth()->user();
+                    /** @var User $user */
+                    return !$user?->hasRole('Estudiante');
+                }), 
 
             ])
             ->bulkActions([
