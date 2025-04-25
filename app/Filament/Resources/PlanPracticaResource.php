@@ -8,6 +8,7 @@ use App\Models\PlanPractica;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use PhpOffice\PhpWord\TemplateProcessor;
@@ -195,7 +196,34 @@ class PlanPracticaResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                //Tables\Actions\EditAction::make(),
+                Action::make('actualizar_fechas')
+                    ->label('Asignar fecha')
+                    ->icon('heroicon-o-calendar')
+                    ->modalHeading('Actualizar Fechas Clave')
+                    ->modalSubmitActionLabel('Guardar')
+                    ->modalWidth('sm')
+                    ->form([
+                        Forms\Components\DatePicker::make('fecha_resolucion')
+                            ->label('Fecha Resolución')
+                            ->required(),
+                            
+                        Forms\Components\DatePicker::make('fecha_entrega_a_docentes')
+                            ->label('Fecha Entrega Docentes')
+                            ,
+                            
+                        Forms\Components\DateTimePicker::make('fecha_sustentacion')
+                            ->label('Fecha Sustentación')
+                            ->required(),
+                    ])
+                    ->action(function (PlanPractica $record, array $data) {
+                        $record->update($data);
+                        
+                        Notification::make()
+                            ->title('Fechas actualizadas correctamente')
+                            ->success()
+                            ->send();
+                    }),
                 Action::make('descargar_carta')
                 ->label('Descargar carta')
                 ->icon('heroicon-o-arrow-down')
