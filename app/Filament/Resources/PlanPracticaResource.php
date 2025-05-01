@@ -18,6 +18,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Tables\Actions\Action;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class PlanPracticaResource extends Resource
@@ -27,7 +28,7 @@ class PlanPracticaResource extends Resource
     protected static ?string $navigationLabel = 'Plan de Prácticas';
     protected static ?string $pluralLabel = 'Plan de Prácticas';
     protected static ?string $navigationGroup = 'Plan de Prácticas';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     public static function form(Form $form): Form
     {
@@ -47,6 +48,7 @@ class PlanPracticaResource extends Resource
                 Forms\Components\DatePicker::make('fecha_entrega_a_docentes'),
                 Forms\Components\DateTimePicker::make('fecha_sustentacion'),
                 Forms\Components\TextInput::make('estado')
+                    
                     ->required()
                     ->maxLength(50),
             ]);
@@ -57,7 +59,7 @@ class PlanPracticaResource extends Resource
         return $table
             ->columns([
 
-                Tables\Columns\TextColumn::make('solicitude.estudiante.tipoEstudiante.nombre')
+                Tables\Columns\TextColumn::make('solicitude.estudiante.tipo_estudiante')
                 ->label('Est/Egre')
                 ->numeric()
                 ->searchable(),
@@ -66,7 +68,11 @@ class PlanPracticaResource extends Resource
                     ->numeric()
                     ->sortable()
                     ->searchable(),
-                    
+                    Tables\Columns\TextColumn::make('solicitude.asesor.nombre')
+                    ->label('Asesor')
+                    ->numeric()
+                    ->sortable()
+                    ->searchable(),  
                 
                 Tables\Columns\TextColumn::make('solicitude.nombre')
                     ->label('Titulo de práctica')
@@ -196,6 +202,25 @@ class PlanPracticaResource extends Resource
                 //
             ])
             ->actions([
+                Action::make('crearPractica')
+    ->label('Crear Práctica')
+    ->action(function (Model $record) {
+        
+        \App\Models\Practica::create([
+            'estudiante_id' => $record->solicitude->estudiante_id,
+            'docente_id' => $record->solicitude->asesor_id, // asesor
+            'solicitude_id' => $record->solicitude_id,
+            'plan_practica_id' => $record->id,
+            'empresa_id' => $record->solicitude->empresa_id,
+            'estado' => 'En Desarrollo', // O el estado que elijas
+        ]);
+        
+        Notification::make()
+            ->title('Práctica creada exitosamente.')
+            ->success()
+            ->send();
+    })
+    ->visible(fn (Model $record) => true),
                 //Tables\Actions\EditAction::make(),
                 Action::make('actualizar_fechas')
                     ->label('Asignar fecha')
@@ -336,6 +361,7 @@ class PlanPracticaResource extends Resource
                     // Devolver el archivo para su descarga y eliminarlo después de enviarlo
                     return response()->download($savePath)->deleteFileAfterSend(true);
                 }),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

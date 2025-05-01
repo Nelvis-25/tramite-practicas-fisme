@@ -80,6 +80,29 @@ class EvaluacionPlanDePractica extends Model
         $plan->evaluaciones()
             ->where('estado', 'Pendiente')
             ->delete();
-    }
+    
+    
+    
+            if ($nuevoEstado === 'Aprobado') {
+                $existePractica = \App\Models\Practica::where('plan_practica_id', $plan->id)->first();
+            
+                if (!$existePractica) {
+                    \App\Models\Practica::create([
+                        'estudiante_id' => $plan->solicitude->estudiante_id,
+                        'docente_id' => $plan->solicitude->asesor_id,
+                        'solicitude_id' => $plan->solicitude_id,
+                        'plan_practica_id' => $plan->id,
+                        'empresa_id' => $plan->solicitude->empresa_id,
+                        'estado' => 'En Desarrollo',
+                    ]);
+                }
+            }
+    
+    
+    
+        }
+
+
+
 
 }

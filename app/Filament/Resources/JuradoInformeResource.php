@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\TipoEstudianteResource\Pages;
-use App\Filament\Resources\TipoEstudianteResource\RelationManagers;
-use App\Models\TipoEstudiante;
+use App\Filament\Resources\JuradoInformeResource\Pages;
+use App\Filament\Resources\JuradoInformeResource\RelationManagers;
+use App\Models\JuradoInforme;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,30 +13,24 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class TipoEstudianteResource extends Resource
+class JuradoInformeResource extends Resource
 {
-    protected static ?string $model = TipoEstudiante::class;
-
-    protected static ?string $navigationLabel = 'Tipos estudiante';
-    protected static ?string $label = 'tipo';
-    protected static ?string $pluralLabel = 'Tipos de estudiante';
-
-    protected static ?string $navigationGroup = 'Estudiante';
-    //protected static ?int $navigationSort = 1;
-
-    protected static ?string $navigationIcon = 'heroicon-o-code-bracket-square';
+    protected static ?string $model = JuradoInforme::class;
+    protected static ?string $navigationGroup = 'Evaluación de informes';
+    protected static ?string $navigationIcon = 'heroicon-o-users';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\TextInput::make('nombre')
-                    ->label('Tipo de estudiante')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(100),
+                //Forms\Components\DatePicker::make('fechainicio'),
+                //Forms\Components\DatePicker::make('fechafin'),
                 Forms\Components\Toggle::make('estado')
-                    ->required()
-                    ->default(true),
+                   ->default(true)
+                    ->required(),
             ]);
     }
 
@@ -45,9 +39,15 @@ class TipoEstudianteResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nombre')
-                    ->label('Tipo de estudiante')
                     ->searchable(),
+               // Tables\Columns\TextColumn::make('fechainicio')
+                   // ->date()
+                   // ->sortable(),
+                //Tables\Columns\TextColumn::make('fechafin')
+                 //   ->date()
+                   // ->sortable(),
                 Tables\Columns\IconColumn::make('estado')
+                    ->default(true)
                     ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -75,7 +75,7 @@ class TipoEstudianteResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ManageTipoEstudiantes::route('/'),
+            'index' => Pages\ManageJuradoInformes::route('/'),
         ];
     }
 }

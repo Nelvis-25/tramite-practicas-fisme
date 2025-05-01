@@ -44,5 +44,17 @@ class Docente extends Model
     {
         return $this->hasMany(IntegranteComision::class);
     }
+    public function integrante(): hasMany
+    {
+        return $this->hasMany(Integrante::class);
+    }
+    public function solicitude()
+{
+    return $this->hasMany(Solicitude::class);
+}
+    public function practicas()
+{
+    return $this->hasMany(Practica::class, 'docente_id');
+}
 
 }

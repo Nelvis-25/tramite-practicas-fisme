@@ -94,14 +94,12 @@ class DocenteResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('tipo_contrato')
                     ->searchable(),
-                Tables\Columns\IconColumn::make('estado')
-                    ->boolean(),
-                Tables\Columns\TextColumn::make('user.name')
-                    ->numeric()
-                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('cargo.nombre')
                     ->numeric()
                     ->sortable(),
+                    Tables\Columns\IconColumn::make('estado')
+                    ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

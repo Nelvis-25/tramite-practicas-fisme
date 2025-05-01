@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('nombre', 100);
         $table->string('dni', 8)->unique();
         $table->string('codigo', 10)->unique();
-        $table->unsignedBigInteger('tipo_estudiante_id');
+        $table->string('tipo_estudiante')->nullable();
         $table->string('ciclo')->nullable();
         $table->string('facultad', 250);
         $table->string('carrera', 120);
@@ -27,13 +27,7 @@ return new class extends Migration
         $table->unsignedBigInteger('user_id');
         
         // Foreign keys
-        $table->foreign('tipo_estudiante_id')
-              ->references('id')
-              ->on('tipo_estudiantes')
-              ->cascadeOnDelete()
-              ->cascadeOnUpdate()
-              ;
-
+        
               
         $table->foreign('user_id')
               ->references('id')

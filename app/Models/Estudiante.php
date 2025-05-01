@@ -18,7 +18,7 @@ class Estudiante extends Model
         'nombre',
         'dni',
         'codigo',
-        'tipo_estudiante_id',
+        'tipo_estudiante',
         'ciclo',
         'facultad',
         'carrera',
@@ -34,10 +34,7 @@ class Estudiante extends Model
     ];
 
    
-    public function tipoEstudiante(): BelongsTo
-    {
-        return $this->belongsTo(TipoEstudiante::class);
-    }
+
     public function scopeDeUsuario($query, $userId)
 {
     return $query->where('user_id', $userId);
@@ -53,5 +50,13 @@ public function solicitude(): HasOne
         return $this->belongsTo(User::class);
     }
 
+    public function practicas()
+{
+    return $this->hasMany(Practica::class, 'docente_id');
+}
+public function solicitudInformes()
+{
+    return $this->hasMany(SolicitudInforme::class, 'estudiante_id');
+}
    
 }

@@ -7,6 +7,8 @@ use App\Filament\Resources\EvaluacionPlanDePracticaResource\RelationManagers;
 use App\Models\EvaluacionPlanDePractica;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -18,7 +20,7 @@ class EvaluacionPlanDePracticaResource extends Resource
 {
     protected static ?string $model = EvaluacionPlanDePractica::class;
     protected static ?string $navigationGroup = 'Comisiones permanentes';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-pencil';
     public static function getEloquentQuery(): Builder
 {
     $query = parent::getEloquentQuery();
@@ -45,36 +47,68 @@ class EvaluacionPlanDePracticaResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Select::make('plan_practica_id')
-                ->label('Estudiante')
+                ->label('Nombre del estudiante')
+                ->options(function () {
+                    return \App\Models\PlanPractica::with('solicitude.estudiante')
+                        ->get()
+                        ->mapWithKeys(function ($estudiante) {
+                            $nombre = optional($estudiante->solicitude->estudiante)->nombre;
+                            return [$estudiante->id => $nombre ?? 'Sin nombre'];
+                        });
+                })
+                ->reactive() 
                 ->searchable()
-                ->required()
-                ->options(function ($get) {
-                    $planPracticaId = $get('plan_practica_id');
+                ->required(),
+                
+                Forms\Components\Select::make('integrante_comision_id')
+                ->label('Nombre del evaluador')
+                ->options(function (callable $get) {
+                    $informeId = $get('plan_practica_id');
             
-                    if ($planPracticaId) {
-                        $planPractica = \App\Models\PlanPractica::find($planPracticaId);
-                        
-                        if ($planPractica && $planPractica->solicitude && $planPractica->solicitude->estudiante) {
-                            return [
-                                $planPractica->id => optional($planPractica->solicitude->estudiante)->nombre ?? 'Sin nombre'
-                            ];
+                    if (!$informeId) {
+                        return [];
+                    }
+            
+                    $informe = \App\Models\PlanPractica::with('comisionPermanente.integranteComision.docente')
+                        ->find($informeId);
+            
+                    if (!$informe || !$informe->comisionPermanente) {
+                        return [];
+                    }
+            
+                    $user = auth()->user();
+                    $docente = \App\Models\Docente::where('user_id', $user->id)->first();
+            
+                    $integrantes = $informe->comisionPermanente->integranteComision;
+                    if ($docente) {
+                        $miembro = $integrantes->firstWhere('docente_id', $docente->id);
+                        if ($miembro) {
+                            $nombre = optional($miembro->docente)->nombre;
+                            $cargo = $miembro->cargo;
+                            return [$miembro->id => "{$nombre} - {$cargo}"];
                         }
                     }
-
-                    return \App\Models\Estudiante::pluck('nombre', 'id');
-                })
-                ->getOptionLabelFromRecordUsing(function ($record) {  
-                    return optional($record->solicitude?->estudiante)->nombre ?? 'Sin nombre';
-                }),
-                Forms\Components\Select::make('integrante_comision_id')
-                ->label('Integrante de Comisión')
-                ->relationship('integranteComision', 'id')
-                ->getOptionLabelFromRecordUsing(function ($record) {
-                    $nombre = optional($record->docente)->nombre;
-                    $cargo = $record->cargo ?? 'Sin cargo';
-                    return "$nombre - $cargo";
+                    return $integrantes->mapWithKeys(function ($integrante) {
+                        $nombre = optional($integrante->docente)->nombre;
+                        $cargo = $integrante->cargo;
+                        return [$integrante->id => "{$nombre} - {$cargo}"];
+                    });
                 })
                 ->searchable()
+                ->required()
+                ->reactive(),
+                Forms\Components\Radio::make('estado')
+                ->label('Evaluación') // El label se mostrará encima
+                ->options([
+                    'Aprobado' => 'Aprobado', 
+                    'Observado' => 'Observado',
+                    'Desaprobado' => 'Desaprobado',
+                ])
+                ->columns(3) 
+                ->reactive()
+                ->afterStateUpdated(function (Set $set, Get $get, $state) {
+                    $set('activo', $state !== 'Observado');
+                })
                 ->required(),
 
                 Forms\Components\Placeholder::make('informe_estudiante')
@@ -101,12 +135,19 @@ class EvaluacionPlanDePracticaResource extends Resource
                     return basename($planPractica->solicitude->informe);
                 }),
             
-                Forms\Components\TextInput::make('estado')
-                    ->required(),
-                Forms\Components\TextInput::make('observacion')
-                    ->maxLength(600),
+        
+                    Forms\Components\Textarea::make('observacion')
+                    ->label('Observación')
+                    ->maxLength(600)
+                    ->rows(4)
+                    ->required(fn (Get $get) => in_array($get('estado'), ['Desaprobado', 'Observado']))
+                    ->visible(fn (Get $get) => in_array($get('estado'), ['Desaprobado', 'Observado'])),
+
                 Forms\Components\Toggle::make('activo')
-                    ->required(),
+                ->label('Estado')
+                ->reactive()
+                ->disabled()
+                ->required(),
             ]);
     }
 
@@ -147,8 +188,12 @@ class EvaluacionPlanDePracticaResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('estado'),
+                Tables\Columns\TextColumn::make('estado')
+                ->label('Calificación')
+                ->searchable()
+                ,
                 Tables\Columns\IconColumn::make('activo')
+                    ->label('Estado')
                     ->boolean()
                     ->color(fn (bool $state) => $state ? null : 'gray'),
                 Tables\Columns\TextColumn::make('created_at')
@@ -215,6 +260,7 @@ class EvaluacionPlanDePracticaResource extends Resource
                 }),
             
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
 
             ])
             ->bulkActions([

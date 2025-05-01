@@ -22,7 +22,7 @@ class SolicitudeResource extends Resource
 {
     protected static ?string $model = Solicitude::class;
     protected static ?string $navigationGroup = 'Plan de Prácticas';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-document';
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
@@ -64,6 +64,11 @@ class SolicitudeResource extends Resource
                 Forms\Components\Select::make('estudiante_id')
                     ->relationship('estudiante', 'nombre')
                     ->required()
+                    ->searchable(),
+                Forms\Components\Select::make('empresa_id')
+                    ->label('Empresa')
+                    ->relationship('empresa', 'nombre')
+                    ->nullable()
                     ->searchable(),
                 Forms\Components\Select::make('linea_investigacion_id')
                     ->relationship('lineaInvestigacion', 'nombre')
@@ -149,9 +154,9 @@ class SolicitudeResource extends Resource
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('asesor.nombre')
-                    ->label('Asesor')
-                    ->numeric()
-                    ->sortable(),
+                   ->label('Asesor')
+                   ->numeric()
+                   ->sortable(),
                 Tables\Columns\TextColumn::make('fecha_inicio')
                     ->date()
                     ->sortable(),
@@ -191,7 +196,7 @@ class SolicitudeResource extends Resource
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('carta_presentacion')
-                   ->label('Carta de autorización')
+                ->label('Carta de autorización')
                 ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')
                 ->url(function ($record) {
                     if (!$record->carta_presentacion) return null;
@@ -425,7 +430,7 @@ class SolicitudeResource extends Resource
                     /** @var User $user */
                     return !$user?->hasRole('Estudiante');
                 }), 
-
+              
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

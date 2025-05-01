@@ -46,8 +46,8 @@ public static function canCreate(): bool
 
     protected static ?string $model = Estudiante::class;
     protected static ?string $navigationGroup = 'Estudiante';
-
-    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+    protected static ?string $navigationLabel = 'Registro de estudiantes';
+    protected static ?string $navigationIcon = 'heroicon-o-users';
 
      
     public static function form(Form $form): Form
@@ -65,11 +65,15 @@ public static function canCreate(): bool
                 Forms\Components\TextInput::make('codigo')
                     ->required()
                     ->maxLength(10),
-                Forms\Components\Select::make('tipo_estudiante_id')
-                    ->relationship('tipoEstudiante', 'nombre') 
+                Forms\Components\Select::make('tipo_estudiante')
+                ->label('Tipo de Estudiante')
+                ->options([
+                    'Estudiante' => 'Estudiante',
+                    'Egresado' => 'Egresado', 
+                ])
                     ->required()
                     ->reactive() 
-                    ->preload(),
+                    ,
                     Forms\Components\TextInput::make('telefono')
                     ->tel()
                     ->required()
@@ -82,10 +86,7 @@ public static function canCreate(): bool
                         'IX' => 'Ciclo IX',
                         'X' => 'Ciclo X',
                     ])
-                    ->disabled(function (callable $get) {
-                        $tipo = \App\Models\TipoEstudiante::find($get('tipo_estudiante_id'));
-                        return $tipo && $tipo->nombre === 'Egresado'; 
-                    })
+                    ->disabled(fn (callable $get) => $get('tipo_estudiante') === 'Egresado')
                   ,
                                     
                 Forms\Components\TextInput::make('facultad')
@@ -142,7 +143,7 @@ public static function canCreate(): bool
                     ->searchable(),
                 Tables\Columns\TextColumn::make('codigo')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('tipoEstudiante.nombre')
+                Tables\Columns\TextColumn::make('tipo_estudiante')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('ciclo')

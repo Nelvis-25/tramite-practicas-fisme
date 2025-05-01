@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('validacions', function (Blueprint $table) {
+        Schema::create('jurado_informes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('solicitud_id')->constrained('solicituds')->onDelete('cascade');
-            $table->foreignId('requisito_id')->constrained('requisitos')->onDelete('cascade');
-            $table->boolean('entregado')->nullable();
+            $table->string('nombre', 100);
+            $table->date('fechainicio')->nullable();
+            $table->date('fechafin')->nullable(); 
+            $table->boolean('estado');
             $table->timestamps();
         });
     }
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('validacions');
+        Schema::dropIfExists('jurado_informes');
     }
 };

@@ -5,12 +5,12 @@ namespace App\Providers;
 use App\Http\Livewire\NotasSolicitud;
 use Livewire\Livewire;
 use Illuminate\Support\ServiceProvider;
-
+use App\Models\PlanPractica;
+use App\Observers\PlanPracticaObserver;
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
+    
+
     public function register(): void
     {
         //
@@ -19,14 +19,14 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(): void
-    {
+    //public function boot(): void
+    //{
         // Registra el componente Livewire
         //Livewire::component('notas-solicitud', NotasSolicitud::class);
         
         // Elimina esto si no lo necesitas
         // $this->registerObservers();
-    }
+   // }
 
     /* Elimina este método si no lo usas
     protected function registerObservers(): void

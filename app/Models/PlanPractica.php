@@ -23,7 +23,7 @@ class PlanPractica extends Model
     }
     public function asesor()
     {
-        return $this->belongsTo(Docente::class);
+        return $this->belongsTo(Docente::class, 'asesor_id');
     }
     public function comisionPermanente()
     {
@@ -42,10 +42,10 @@ class PlanPractica extends Model
         return $this->hasMany(EvaluacionPlanDePractica::class);
     }
 
-    public function tipoEstudiante()
-    {
-        return $this->belongsTo(TipoEstudiante::class);
-    }
+    public function practicas()
+{
+    return $this->hasMany(Practica::class, 'docente_id');
+}
 
    
     protected static function booted()
@@ -69,6 +69,8 @@ class PlanPractica extends Model
                         }
                     }
                 });
+                
+                
             }
 
 }

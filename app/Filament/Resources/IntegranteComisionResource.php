@@ -21,8 +21,8 @@ class IntegranteComisionResource extends Resource
     
     protected static ?string $model = IntegranteComision::class;
     protected static ?string $navigationGroup = 'Comisiones permanentes';
-
-    protected static ?string $navigationIcon = 'heroicon-o-check-circle';
+    protected static ?string $navigationIcon = 'heroicon-o-user-group';
+    
 
     public static function form(Form $form): Form
     {
@@ -56,7 +56,7 @@ class IntegranteComisionResource extends Resource
                                 $currentId = $get('id'); // Para ediciones
     
                                 // Solo validar para Presidente y Secretario
-                                if (in_array($cargo, ['Presidente', 'Secretario'])) {
+                                if (in_array($cargo, ['Presidente', 'Secretario', 'Vocal', 'Accesitario'])) {
                                     $exists = IntegranteComision::where('comision_permanente_id', $comisionId)
                                         ->where('cargo', $cargo)
                                         ->when($currentId, fn($query) => $query->where('id', '!=', $currentId))
