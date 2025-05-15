@@ -122,6 +122,7 @@ class PlanPracticaResource extends Resource
                     })
                     ->wrap(),
                 Tables\Columns\TextColumn::make('fecha_resolucion')
+                    ->label('Fecha de resolución')
                   ->searchable()
                     ->date()
                     ->sortable(),
@@ -130,65 +131,90 @@ class PlanPracticaResource extends Resource
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('fecha_sustentacion')
-                ->searchable()
+                   ->label('Fecha de sustentación')
+                   ->searchable()
                     ->dateTime()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('estado')
-                    ->searchable(),
+                    ->searchable()
+                    ->label('Evaluación') 
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('observaciones')
+                    ->label('Sustentación')
+                    ->wrap()
+                    ->html()
+                    ->formatStateUsing(function ($state) {
+                        if (empty($state)) {
+                            return '<em>Por sustentar</em>';
+                        }
+                        return preg_replace(
+                            '/Reprogramado/',
+                            '<span class="font-bold text-danger">Reprogramado</span>',
+                            nl2br(e($state))
+                        );
+                    })
+                    ->sortable()
+                    ->extraAttributes([
+                        'style' => 'width: 150px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; word-wrap: break-word;',
+                    ]),
 
-                    Tables\Columns\TextColumn::make('estado')
-                    ->searchable(),
-                    IconColumn::make('semaforo')
-                    ->label('Semaforo')
-                    ->getStateUsing(fn () => true) 
+                   // Tables\Columns\TextColumn::make('estado')
+                    //->label('Evaluación') 
+                   // ->searchable(),
+                
+                IconColumn::make('semaforo')
+                    ->label('Semáforo')
+                    ->getStateUsing(fn () => true)
                     ->icon(function ($record) {
-                        if (!$record->fecha_resolucion) {
+                        if (!$record->created_at) {
                             return 'heroicon-o-check-circle';
                         }
                 
                         if ($record->fecha_sustentacion) {
-                            $dias = \Carbon\Carbon::parse($record->fecha_resolucion)
+                            $dias = \Carbon\Carbon::parse($record->created_at)
                                 ->diffInWeekdays($record->fecha_sustentacion);
                             return ($dias <= 15) ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle';
                         }
                 
-                        $fechaLimite = \Carbon\Carbon::parse($record->fecha_resolucion)->addWeekdays(15);
+                        $fechaLimite = \Carbon\Carbon::parse($record->created_at)->addWeekdays(15);
                         return now()->gt($fechaLimite) ? 'heroicon-o-x-circle' : 'heroicon-o-clock';
                     })
                     ->color(function ($record) {
-                        if (!$record->fecha_resolucion) {
+                        if (!$record->created_at) {
                             return null;
                         }
                 
                         if ($record->fecha_sustentacion) {
-                            $dias = \Carbon\Carbon::parse($record->fecha_resolucion)
+                            $dias = \Carbon\Carbon::parse($record->created_at)
                                 ->diffInWeekdays($record->fecha_sustentacion);
                             return ($dias <= 15) ? 'success' : 'danger';
                         }
                 
-                        $fechaLimite = \Carbon\Carbon::parse($record->fecha_resolucion)->addWeekdays(15);
+                        $fechaLimite = \Carbon\Carbon::parse($record->created_at)->addWeekdays(15);
                         return now()->gt($fechaLimite) ? 'danger' : 'success';
                     })
                     ->tooltip(function ($record) {
-                        if (!$record->fecha_resolucion) {
-                            return 'Esperando fecha de resolución';
+                        if (!$record->created_at) {
+                            return 'Esperando fecha de inicio';
                         }
                 
                         if ($record->fecha_sustentacion) {
-                            $dias = \Carbon\Carbon::parse($record->fecha_resolucion)
+                            $dias = \Carbon\Carbon::parse($record->created_at)
                                 ->diffInWeekdays($record->fecha_sustentacion);
                             return ($dias <= 15) 
                                 ? "Cumplió: {$dias} días hábiles" 
                                 : "Incumplió: {$dias} días hábiles";
                         }
                 
-                        $fechaLimite = \Carbon\Carbon::parse($record->fecha_resolucion)->addWeekdays(15);
+                        $fechaLimite = \Carbon\Carbon::parse($record->created_at)->addWeekdays(15);
                         $diasRestantes = now()->diffInWeekdays($fechaLimite, false);
                 
                         return ($diasRestantes > 0)
                             ? "Plazo: {$diasRestantes} días hábiles restantes"
                             : "¡Plazo vencido hace " . abs($diasRestantes) . " días hábiles!";
                     }),
+                
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -198,65 +224,65 @@ class PlanPracticaResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])
             ->actions([
-                Action::make('crearPractica')
-    ->label('Crear Práctica')
-    ->action(function (Model $record) {
-        
-        \App\Models\Practica::create([
-            'estudiante_id' => $record->solicitude->estudiante_id,
-            'docente_id' => $record->solicitude->asesor_id, // asesor
-            'solicitude_id' => $record->solicitude_id,
-            'plan_practica_id' => $record->id,
-            'empresa_id' => $record->solicitude->empresa_id,
-            'estado' => 'En Desarrollo', // O el estado que elijas
-        ]);
-        
-        Notification::make()
-            ->title('Práctica creada exitosamente.')
-            ->success()
-            ->send();
-    })
-    ->visible(fn (Model $record) => true),
+                
                 //Tables\Actions\EditAction::make(),
                 Action::make('actualizar_fechas')
-                    ->label('Asignar fecha')
-                    ->icon('heroicon-o-calendar')
-                    ->modalHeading('Actualizar Fechas Clave')
-                    ->modalSubmitActionLabel('Guardar')
-                    ->modalWidth('sm')
-                    ->form([
-                        Forms\Components\DatePicker::make('fecha_resolucion')
-                            ->label('Fecha Resolución')
-                            ->required(),
-                            
-                        Forms\Components\DatePicker::make('fecha_entrega_a_docentes')
-                            ->label('Fecha Entrega Docentes')
-                            ,
-                            
-                        Forms\Components\DateTimePicker::make('fecha_sustentacion')
-                            ->label('Fecha Sustentación')
-                            ->required(),
-                    ])
-                    ->action(function (PlanPractica $record, array $data) {
-                        $record->update($data);
-                        
-                        Notification::make()
-                            ->title('Fechas actualizadas correctamente')
-                            ->success()
-                            ->send();
-                    }),
+                ->label('Asignar fecha')
+                ->icon('heroicon-o-calendar')
+                ->modalHeading('Actualizar Fechas Clave')
+                ->modalSubmitActionLabel('Guardar')
+                ->modalWidth('sm')
+                ->form([
+                    Forms\Components\DatePicker::make('fecha_resolucion')
+                        ->label('Fecha Resolución')
+                        ,
+                    
+                    Forms\Components\DatePicker::make('fecha_entrega_a_docentes')
+                        ->label('Fecha Entrega Docentes'),
+                    
+                    Forms\Components\DateTimePicker::make('fecha_sustentacion')
+                        ->label('Fecha Sustentación')
+                        ,
+                ])
+                ->action(function (PlanPractica $record, array $data) {
+                    // Si antes no tenía fecha de sustentación y ahora se asigna una, colocar "Por sustentar"
+                    if (empty($record->fecha_sustentacion) && !empty($data['fecha_sustentacion'])) {
+                        $data['observaciones'] = 'Por sustentar';
+                    }
+                
+                    // Verificar si la fecha de sustentación está siendo modificada (reprogramación)
+                    if ($record->fecha_sustentacion && $record->fecha_sustentacion != $data['fecha_sustentacion']) {
+                        $fechaAnterior = \Carbon\Carbon::parse($record->fecha_sustentacion)->format('d/m/Y H:i');
+                        $fechaNueva = \Carbon\Carbon::parse($data['fecha_sustentacion'])->format('d/m/Y H:i');
+                
+                        $data['observaciones'] = "Reprogramado de: {$fechaAnterior} para la fecha: {$fechaNueva}";
+                    }
+                
+                    // Si no hay reprogramación ni asignación, mantener observación actual
+                    if (!isset($data['observaciones'])) {
+                        $data['observaciones'] = $record->observaciones;
+                    }
+                
+                    $record->update($data);
+                
+                    Notification::make()
+                        ->title('Fechas insertadas correctamente')
+                        ->success()
+                        ->send();
+                }),
+                
+            
                 Action::make('descargar_carta')
                 ->label('Descargar carta')
                 ->icon('heroicon-o-arrow-down')
                 ->action(function ($record) {
-                    // Ruta al archivo de plantilla
                     $templatePath = storage_path('app/public/plantillas/carta.docx');
                     
-                    // Verificar si el archivo de plantilla existe
                     if (!file_exists($templatePath)) {
                         return response()->json(['error' => 'La plantilla no se encuentra disponible.'], 404);
                     }

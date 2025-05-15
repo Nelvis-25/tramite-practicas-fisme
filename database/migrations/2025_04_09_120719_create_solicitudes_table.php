@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('nombre', 700);
             $table->foreignId('estudiante_id')->constrained('estudiantes');
             $table->foreignId('linea_investigacion_id')->constrained('linea_investigacions');
-            $table->foreignId('empresa_id')->constrained('empresas')->nullable();
             $table->foreignId('asesor_id')->constrained('docentes');
             $table->string('empresa')->nullable();  
             $table->date('fecha_inicio')->nullable();    

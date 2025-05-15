@@ -18,7 +18,6 @@ class Solicitude extends Model
         'fecha_inicio',
         'fecha_fin',
         'empresa',
-        'empresa_id',
         'solicitud',
         'constancia',
         'informe',
@@ -60,10 +59,7 @@ class Solicitude extends Model
 {
     return $this->hasMany(Practica::class, 'docente_id');
 }
-public function empresa()
-{
-    return $this->belongsTo(Empresa::class, 'empresa_id');
-}
+
     protected static function boot()
     {
         parent::boot();

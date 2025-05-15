@@ -64,6 +64,6 @@ class ComisionPermanente extends Model
     {
         return $this->hasMany(IntegranteComision::class);
     }
-    // esto boras esto agrege : 
+    // esto boras esto agrege  
     
 }

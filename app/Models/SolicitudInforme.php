@@ -34,7 +34,9 @@ class SolicitudInforme extends Model
     }
     public function informePracticas()
     {
-        return $this->hasMany(InformePractica::class);
+        return $this->hasMany(InformePractica::class, 'solicitud_informe_id');
     }
 
+
+         
 }

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->date('fecha_resolucion')->nullable();
             $table->date('fecha_entrega_a_docentes')->nullable();
             $table->datetime('fecha_sustentacion')->nullable();
+            $table->string('observaciones', 200)->nullable();
             $table->string('estado', 50);
             $table->timestamps();
         });

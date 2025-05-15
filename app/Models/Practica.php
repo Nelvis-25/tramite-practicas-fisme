@@ -15,10 +15,12 @@ class Practica extends Model
         'docente_id',
         'solicitude_id',
         'plan_practica_id',
-        'empresa_id',
-        'estado'
+        'estado',
+        'activo',
     ];
-
+    protected $casts = [
+    'activo' => 'boolean',
+    ];
     public function solicitude()
     {
         return $this->belongsTo(Solicitude::class, 'solicitude_id');
@@ -31,14 +33,11 @@ class Practica extends Model
     
  
     public function asesor()
-{
-    return $this->belongsTo(Docente::class, 'docente_id');
-}
-    
-    public function empresa()
     {
-        return $this->belongsTo(Empresa::class, 'empresa_id');
-    }
+    return $this->belongsTo(Docente::class, 'docente_id');
+     }
+    
+    
     
     public function planPractica()
     {
@@ -49,5 +48,6 @@ class Practica extends Model
         return $this->hasMany(SolicitudInforme::class, 'practica_id');
     }
    
+// metodo para obtener y liverar alos acesores
 
 }

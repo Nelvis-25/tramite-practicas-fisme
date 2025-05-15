@@ -17,7 +17,8 @@ class SeguimientoComponent extends Component
     public $estadoSolicitud;
     public $jurados = [];
     public $fechaSustentacion;
-
+    public $observaciones;
+    public $estadoPlan;
     public function mount()
     {
         $user = Auth::user();
@@ -44,7 +45,8 @@ class SeguimientoComponent extends Component
                         $this->fechaSustentacion = $plan->fecha_sustentacion 
                         ? Carbon::parse($plan->fecha_sustentacion)->format('d/m/Y H:i') 
                         : null;
-
+                        $this->observaciones = $plan->observaciones ?? null;
+                        $this->estadoPlan = $plan->estado;
                         if ($plan->comision_permanente_id) {
                             // 🔍 Obtener jurados (integrantes de la comisión)
                             $integrantes = IntegranteComision::with('docente')

@@ -97,7 +97,7 @@ class EvaluacionInformeResource extends Resource
                     $set('activo', $state !== 'Observado');
                 })
                 ->required(),
-                Forms\Components\DatePicker::make('fecha_evaluacion'),
+                //Forms\Components\DatePicker::make('fecha_evaluacion'),
 
             
             Forms\Components\Textarea::make('observacion')
@@ -121,6 +121,7 @@ class EvaluacionInformeResource extends Resource
                 Tables\Columns\TextColumn::make('informePractica.solicitudInforme.estudiante.nombre')
                 ->label('Nombre del practicante')  
                 ->numeric()
+                ->searchable()
                 ->sortable(),
                 Tables\Columns\TextColumn::make('informePractica.solicitudInforme.informe')
                 ->label('Informe de practica') 
@@ -134,18 +135,26 @@ class EvaluacionInformeResource extends Resource
                 ->label('Integrante de Comisión')
                 ->formatStateUsing(fn ($state, $record) => $state . ' - ' . $record->integrante->cargo)
                 ->searchable(),
-                Tables\Columns\TextColumn::make('integrante.docente.user.name')
-                ->label('Integrante de Comisión')
+                //Tables\Columns\TextColumn::make('integrante.docente.user.name')
+                //->label('Integrante de Comisión')
                 
-                ->sortable(),
-                Tables\Columns\TextColumn::make('fecha_evaluacion')
-                    ->date()
-                    ->sortable(),
+                //->sortable(),
+                //Tables\Columns\TextColumn::make('fecha_evaluacion')
+                   // ->date()
+                    //->sortable(),
                 Tables\Columns\TextColumn::make('observacion')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('estado'),
+                    ->searchable()
+                    ->extraAttributes([
+                        'style' => 'width: 160px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; word-wrap: break-word;',
+                    ]),
+                Tables\Columns\TextColumn::make('estado')
+                    ->searchable()
+                     ->color(fn ($state) => $state === 'Desaprobado' ? 'danger' : null),
                 Tables\Columns\IconColumn::make('activo')
-                    ->boolean(),
+                    ->label('Estado')
+                    ->boolean()
+                    ->color(fn (bool $state) => $state ?  'primary' : 'gray')
+                    ->tooltip(fn ($record) => $record->activo ? 'Evaluado' : 'En evaluación'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -166,6 +175,7 @@ class EvaluacionInformeResource extends Resource
                 ->modalHeading('')
                 ->modalSubmitActionLabel('Confirmar')
                 ->modalWidth('2xl')
+                ->visible(fn ($record) => $record->estado !== 'Aprobado') 
                 ->form([
                     Forms\Components\Placeholder::make('')
                         ->content('📝 Evaluar Plan de práctica')
@@ -191,7 +201,8 @@ class EvaluacionInformeResource extends Resource
                                 if ($state === 'Aprobado') {
                                     $set('observacion', null);
                                 }
-                            }),
+                            })
+                            ,
                     ])
                     ->columnSpanFull(),
             
@@ -211,8 +222,6 @@ class EvaluacionInformeResource extends Resource
                         'activo' => $data['estado'] === 'Aprobado',
                     ]);
                 }),
-
-                Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([

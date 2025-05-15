@@ -15,6 +15,7 @@ class PlanPractica extends Model
         'fecha_resolucion',
         'fecha_entrega_a_docentes',
         'fecha_sustentacion',
+        'observaciones',
         'estado'
     ];
     public function solicitude()

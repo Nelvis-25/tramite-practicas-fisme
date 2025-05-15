@@ -23,6 +23,7 @@ class Integrante extends Model
         return $this->belongsTo(JuradoInforme::class);
     }
     
+    //aca hay un erro creo
     public function evaluacionInforme()
     {
         return $this->belongsTo(EvaluacionInforme::class, );

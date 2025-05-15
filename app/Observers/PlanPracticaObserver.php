@@ -24,9 +24,7 @@ class PlanPracticaObserver
                 'docente_id' => $plan->solicitude->asesor_id,
                 'solicitude_id' => $plan->solicitud_id,
                 'plan_practica_id' => $plan->id,
-                'empresa_id' => $plan->solicitude->empresa_id,
                 'estado' => 'En desarrollo',
-                'activo' => true
             ]);
         }
     }

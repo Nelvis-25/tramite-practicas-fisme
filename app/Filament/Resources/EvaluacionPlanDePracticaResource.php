@@ -182,7 +182,10 @@ class EvaluacionPlanDePracticaResource extends Resource
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('observacion')
-                    ->searchable(),
+                    ->searchable()
+                    ->extraAttributes([
+                        'style' => 'width: 160px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; word-wrap: break-word;',
+                    ]),
                     Tables\Columns\TextColumn::make('updated_at')
                     ->label('Fecha de evaluación')
                     ->dateTime()
@@ -191,11 +194,12 @@ class EvaluacionPlanDePracticaResource extends Resource
                 Tables\Columns\TextColumn::make('estado')
                 ->label('Calificación')
                 ->searchable()
+                 ->color(fn ($state) => $state === 'Desaprobado' ? 'danger' : null)
                 ,
                 Tables\Columns\IconColumn::make('activo')
                     ->label('Estado')
                     ->boolean()
-                    ->color(fn (bool $state) => $state ? null : 'gray'),
+                    ->color(fn (bool $state) => $state ? 'primary' : 'gray'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -212,6 +216,7 @@ class EvaluacionPlanDePracticaResource extends Resource
                 ->color('primary')
                 ->modalHeading('')
                 ->modalSubmitActionLabel('Confirmar')
+                 ->visible(fn ($record) => $record->estado !== 'Aprobado')
                 ->modalWidth('2xl')
                 ->form([
                     Forms\Components\Placeholder::make('')
@@ -250,6 +255,7 @@ class EvaluacionPlanDePracticaResource extends Resource
                     ->dehydrated(fn ($get) => $get('estado') !== 'Aprobado') // ⬅️ esta línea soluciona el problema
                     ->columnSpanFull()
                     ->extraInputAttributes(['class' => 'mt-4']),
+                    
                 ])
                 ->action(function ($record, $data) {
                     $record->update([

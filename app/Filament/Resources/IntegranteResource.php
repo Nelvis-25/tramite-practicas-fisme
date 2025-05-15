@@ -7,6 +7,7 @@ use App\Filament\Resources\IntegranteResource\RelationManagers;
 use App\Models\Integrante;
 use Closure;
 use Filament\Forms;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -33,43 +34,33 @@ class IntegranteResource extends Resource
                     ->required()
                     ->preload()
                     ,
-                Forms\Components\Select::make('docente_id')
-                    ->relationship('docente', 'nombre', function ($query) {
-                        $query->where('estado', true);
-                    })
-                    ->required()
-                    ->searchable()
-                    ->preload()
-                   ,
-                Forms\Components\Select::make('cargo')
-                ->options([
-                    'Secretario' => 'Secretario',
-                    'Presidente' => 'Presidente',
-                    'Vocal' => 'Vocal',
-                    'Accesitario' => 'Accesitario',
-                ])
-                ->rules([
-                    function (Forms\Get $get) {
-                        return function (string $attribute, $value, Closure $fail) use ($get) {
-                            $juradoInformeId = $get('jurado_informe_id'); 
-                            $cargo = $value;
-                            $currentId = $get('id'); 
-            
-                            if (in_array($cargo, ['Presidente', 'Secretario', 'Vocal', 'Accesitario'])) {
-                                $exists = \App\Models\Integrante::where('jurado_informe_id', $juradoInformeId)
-                                    ->where('cargo', $cargo)
-                                    ->when($currentId, fn($query) => $query->where('id', '!=', $currentId))
-                                    ->exists();
-            
-                                if ($exists) {
-                                    $fail("Ya existe un {$cargo} en este grupo .");
-                                }
-                            }
-                        };
-                    },
-                ])
-                ->required()
-                ->label('Cargo'),
+
+                Repeater::make('integrantes')
+                    ->label('Seleccione los integrantes y sus cargos')
+                    ->schema([
+
+                        Forms\Components\Select::make('docente_id')
+                        ->label('Docente')
+                        ->relationship('docente', 'nombre', function ($query) {
+                            $query->where('estado', true);
+                        })
+                        ->required()
+                        ->searchable()
+                        ->preload(),
+                        Forms\Components\Select::make('cargo')
+                        ->required()
+                        ->options([
+                            'Secretario' => 'Secretario',
+                            'Presidente' => 'Presidente',
+                            'Vocal' => 'Vocal',
+                            'Accesitario' => 'Accesitario',
+                        ]),
+                    ])
+                
+                    ->minItems(1)
+                    ->defaultItems(1)
+                    ->columns(2)
+                    ->required(),
             ]);
     }
 
@@ -79,19 +70,22 @@ class IntegranteResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('juradoInforme.nombre')
                    ->label('Grupo al que pertenece')
-                    ->numeric()
+                   ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('docente.nombre')
                     ->label('Docente evaluador')
-                    ->numeric()
+                    ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('cargo'),
+                Tables\Columns\TextColumn::make('cargo')
+                ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
+                    ->searchable()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
+                    ->searchable()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

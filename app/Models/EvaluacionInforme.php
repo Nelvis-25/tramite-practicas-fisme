@@ -65,11 +65,23 @@ class EvaluacionInforme extends Model
         }
 
         // ✅ Actualizar el estado del plan
-        $plan->updateQuietly(['estado' => $nuevoEstado]);
+        $plan->updateQuietly(
+            [
+                'estado' => $nuevoEstado,
+                'observaciones' => 'Sustentado',
+            ]);
 
         // ✅ Eliminar automáticamente las evaluaciones pendientes (como la del Accesitario)
         $plan->evaluaciones()
             ->where('estado', 'Pendiente')
             ->delete();
+        
+        
+        if ($plan->solicitudInforme && $plan->solicitudInforme->practica) {
+            $plan->solicitudInforme->practica->updateQuietly([
+                'estado' => $nuevoEstado
+            ]);
+             }
+        
         }
 }

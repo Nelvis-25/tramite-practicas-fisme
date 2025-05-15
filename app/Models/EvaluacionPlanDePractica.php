@@ -61,7 +61,7 @@ class EvaluacionPlanDePractica extends Model
             ->get();
 
         if ($evaluacionesCompletadas->count() < 3) {
-            return; // Aún no hay 3 evaluaciones => no hacer nada
+            return; 
         }
 
         // Determinar el nuevo estado del plan
@@ -74,7 +74,10 @@ class EvaluacionPlanDePractica extends Model
         }
 
         // ✅ Actualizar el estado del plan
-        $plan->updateQuietly(['estado' => $nuevoEstado]);
+        $plan->updateQuietly([
+            'estado' => $nuevoEstado,
+            'observaciones' => 'Sustentado',
+        ]);
 
         // ✅ Eliminar automáticamente las evaluaciones pendientes (como la del Accesitario)
         $plan->evaluaciones()
@@ -92,7 +95,6 @@ class EvaluacionPlanDePractica extends Model
                         'docente_id' => $plan->solicitude->asesor_id,
                         'solicitude_id' => $plan->solicitude_id,
                         'plan_practica_id' => $plan->id,
-                        'empresa_id' => $plan->solicitude->empresa_id,
                         'estado' => 'En Desarrollo',
                     ]);
                 }

@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\SolicitudInformeResource\Pages;
 use App\Filament\Resources\SolicitudInformeResource\RelationManagers;
+use App\Models\InformePractica;
 use App\Models\Practica;
 use App\Models\SolicitudInforme;
 use Filament\Forms;
@@ -12,6 +13,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Console\View\Components\Info;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -96,7 +98,7 @@ class SolicitudInformeResource extends Resource
                 ])
                 ->default('Pendiente')
                 ->required()
-                ->disabled(true)
+                //->disabled(true)
             ]);
     }
 
@@ -139,7 +141,16 @@ class SolicitudInformeResource extends Resource
                     ->searchable()
             
                     ,
-                Tables\Columns\TextColumn::make('estado'),
+                    Tables\Columns\TextColumn::make('estado')
+                    ->label('Evaluación')
+                    ->searchable()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Aceptado' => 'success',
+                        'Rechazado' => 'danger',
+                        default => '',
+                    })
+                    
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -168,7 +179,7 @@ class SolicitudInformeResource extends Resource
                         ->columnSpanFull(),
                     
                     Forms\Components\Group::make([
-                        Forms\Components\Radio::make('')
+                        Forms\Components\Radio::make('estado')
                            
                             ->options([
                                 'Aceptado' => 'Aceptado', 
@@ -187,16 +198,67 @@ class SolicitudInformeResource extends Resource
                     $record->update([
                         'estado' => $data['estado'],
                     ]);
-            
-                    // Notificación de éxito usando Notification facade
                     Notification::make()
                         ->title('Estado actualizado a: ' . $data['estado'])
                         ->success()
                         ->send();
                 }),
+
+
+                Tables\Actions\Action::make('asignar_jurado')
+                ->label('Asignar Jurado')
+                ->icon('heroicon-o-user-plus')
+                ->color('primary')
+                ->requiresConfirmation()
+                ->form([
+                    Forms\Components\Select::make('jurado_informe_id')
+                    ->label('Seleccione el jurado que se asignará')
+                    ->options(
+                        \App\Models\JuradoInforme::where('estado', true)->pluck('nombre', 'id')
+                    )
+                    ->required()
+                    ->searchable()
+                ])
+                
+                    ->action(function ($record, array $data) {
+                        if ($record->estado !== 'Aceptado') {
+                            Notification::make()
+                                ->title('Jurado no asignado')
+                                ->body('La solicitud aún no ha sido aceptada, no es posible asignar el jurado.')
+                                ->danger()
+                                ->send();
+                
+                            return;
+                        }
+                        
+                        if ($record->informePracticas()->exists()) {
+                            Notification::make()
+                                ->title('Jurado ya asignado')
+                                ->body('Ya se ha asignado un jurado a esta solicitud.')
+                                ->warning()
+                                ->send();
+                            return;
+                        }
+                        InformePractica::create([
+                            'solicitud_informe_id' => $record->id,
+                            'jurado_informe_id' => $data['jurado_informe_id'],
+                            'estado' => 'Pendiente',
+                        ]);
+                        $record->update([
+                            'estado' => 'Jurado asignado' 
+                        ]);
+                    Notification::make()
+                        ->title('Jurado asignado correctamente')
+                        ->success()
+                        ->send();
+                })
+                
+                
+                ,
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
+
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),

@@ -59,28 +59,37 @@ class SolicitudeResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('nombre')
+                    ->label('Nombre del plan de prácticas')
                     ->required()
                     ->maxLength(700),
                 Forms\Components\Select::make('estudiante_id')
+                    ->label('Selecione el nombre del estudiante')
                     ->relationship('estudiante', 'nombre')
                     ->required()
                     ->searchable(),
-                Forms\Components\Select::make('empresa_id')
-                    ->label('Empresa')
-                    ->relationship('empresa', 'nombre')
-                    ->nullable()
-                    ->searchable(),
+               
                 Forms\Components\Select::make('linea_investigacion_id')
                     ->relationship('lineaInvestigacion', 'nombre')
                     ->required(),
-                Forms\Components\Select::make('asesor_id')
-                    ->relationship('asesor', 'nombre')
-                    ->required()
-                    ->searchable(),
-                Forms\Components\DatePicker::make('fecha_inicio'),
-                Forms\Components\DatePicker::make('fecha_fin'),
+                //Forms\Components\Select::make('asesor_id')
+                   // ->relationship('asesor', 'nombre')
+                   // ->required()
+                   // ->searchable(),
+                 Forms\Components\Select::make('asesor_id')
+                    ->label('Selecione su asesor')
+                    ->relationship('asesor', 'nombre', modifyQueryUsing: function ($query) {
+                     return $query->withCount(['practicas as practicas_activas_count' => function ($q) {
+                     $q->where('activo', true);
+                     }])->having('practicas_activas_count', '<', 5);
+                        })
+                        ->searchable()
+                        ->required(),
+                Forms\Components\DatePicker::make('fecha_inicio')
+                ->label('Ingrese la fecha de inicio de su práctica'),
+                Forms\Components\DatePicker::make('fecha_fin')
+                ->label('Ingrese la fecha que finalizara su práctica'),
                 Forms\Components\FileUpload::make('solicitud')
-                ->label('Solicitud dirigida al Decano')
+                ->label('Solicitud dirigida al Decano/pdf')
                 ->directory('solicitudes')
                 ->acceptedFileTypes(['application/pdf'])
                 ->maxSize(20240)
@@ -90,7 +99,7 @@ class SolicitudeResource extends Resource
                 ->previewable(true) 
                 ->maxSize(20240),
                 Forms\Components\FileUpload::make('constancia')
-                ->label('Constancia de cursos aprobados')
+                ->label('Constancia de cursos aprobados/pdf')
                 ->directory('constancias')
                 ->acceptedFileTypes(['application/pdf'])
                 ->maxSize(20240)
@@ -101,7 +110,7 @@ class SolicitudeResource extends Resource
                 ->maxSize(20240)
                 ->moveFiles(),
                 Forms\Components\FileUpload::make('informe')
-                ->label('Plan de Prácticas ')
+                ->label('Plan de Prácticas/pdf ')
                 ->directory('informes')
                 ->acceptedFileTypes(['application/pdf'])
                 ->maxSize(20240)
@@ -111,7 +120,7 @@ class SolicitudeResource extends Resource
                 ->previewable(true) 
                 ->maxSize(20240),
                 Forms\Components\FileUpload::make('carta_presentacion')
-                ->label('Carta de autorización emitida por la Empresa. ')
+                ->label('Carta de autorización emitida por la Empresa/pdf ')
                 ->directory('cartas_presentacion') 
                 ->acceptedFileTypes(['application/pdf'])
                 ->maxSize(20240)
@@ -121,6 +130,7 @@ class SolicitudeResource extends Resource
                 ->previewable(true) 
                 ->maxSize(20240),
                 Forms\Components\FileUpload::make('comprobante_pago')
+                ->label('Comprobante de pago/img ')
                 ->directory('comprobantes_pago')
                 ->acceptedFileTypes([ 'image/*'])
                 ->maxSize(20240)
@@ -223,7 +233,7 @@ class SolicitudeResource extends Resource
                     ->formatStateUsing(function ($state) {
                         // Definir el color según el estado
                         if ($state == 'Pendiente') {
-                            return "<span style='color: #f59e0b; font-weight: bold;'>$state</span>"; 
+                            return "<span style='color:rgb(90, 66, 26); font-weight: bold;'>$state</span>"; 
                         } elseif ($state == 'Validado') {
                             return "<span style='color: #10b981; font-weight: bold;'>$state</span>"; 
                         } elseif ($state == 'Rechazado') {
@@ -251,29 +261,34 @@ class SolicitudeResource extends Resource
                 ->icon('heroicon-o-check-circle')  
                 ->color('success')
                 ->form([
-                Forms\Components\Placeholder::make('lista_requisitos')
-                    ->label('Requisitos registrados')
-                    ->content(function () {
-                        return Requisito::all()
-                            ->pluck('nombre')
-                            ->map(fn($item) => '• ' . trim($item)) // eliminamos espacios extra
-                            ->implode("\n");
-                    })
-                    ->extraAttributes([
-                        'style' => 'white-space: pre-wrap; line-height: 1.5; font-family: sans-serif;',
-                    ]),
-
-                    Forms\Components\Radio::make('decision')
-                        ->label('Seleccione una opción:')
-                        ->options([
-                            'validado' => ' Aceptar Solicitud',
-                            'rechazado' => ' Rechazar Solicitud',
-                        ])
-                        ->required()
-                        ->inline(false) 
+                
+                    Forms\Components\Placeholder::make('lista_requisitos')
+                        ->label('Requisitos registrados')
+                        ->content(function () {
+                            return Requisito::all()
+                                ->pluck('nombre')
+                                ->map(fn($item) => '• ' . trim($item)) // eliminamos espacios extra
+                                ->implode("\n");
+                        })
                         ->extraAttributes([
-                            'style' => 'display: flex; flex-direction: column; align-items: center; gap: 1rem;',
+                            'style' => 'white-space: pre-wrap; line-height: 1.5; font-family: sans-serif;',
+                              'class' => 'border border-gray-300 rounded-lg p-4',
                         ]),
+              
+                    Forms\Components\Group::make([
+                        Forms\Components\Radio::make('decision')
+                            ->label('Seleccione una opción:')
+                            ->options([
+                                'validado' => ' Aceptar Solicitud',
+                                'rechazado' => ' Rechazar Solicitud',
+                            ])
+                            ->required()
+                            //->inline(false)
+                             ->columnSpanFull()
+                            ->extraAttributes([
+                                'class' => 'flex justify-center gap-4 border rounded-lg p-4 mt-2',
+                            ]),
+                    ])
                 ])
                 ->action(function (Solicitude $record, array $data) {
                     $decision = $data['decision'];
@@ -384,7 +399,7 @@ class SolicitudeResource extends Resource
                             ->danger()
                             ->send();
             
-                        return; // Importante: salir de la acción
+                        return; 
                     }
             
                     $existePlan = PlanPractica::where('solicitude_id', $record->id)->exists();
@@ -393,7 +408,8 @@ class SolicitudeResource extends Resource
                         $record->update([
                             'estado' => 'Asignado',
                         ]);
-                    } else {
+                    }
+                     else {
                         $comisionActiva = ComisionPermanente::where('estado', true)
                             ->where('fecha_fin', '>', now())
                             ->first();
@@ -411,7 +427,7 @@ class SolicitudeResource extends Resource
                         PlanPractica::create([
                             'solicitude_id' => $record->id,
                             'comision_permanente_id' => $comisionActiva->id,
-                            'estado' => 'Asignado',
+                            'estado' => 'Pendiente',
                         ]);
             
                         $record->update([

@@ -44,15 +44,15 @@ class PracticaResource extends Resource
                     ->relationship('planPractica', 'estado')
                     ->required()
                     ,
-                Forms\Components\Select::make('empresa_id')
-                     ->label('Empresa')
-                    ->relationship('empresa', 'nombre')
-                    ->nullable()
-                    ,
+               
                     Forms\Components\TextInput::make('estado')
                     ->label('Estado')
                     ->required()
                     ->maxLength(50),
+
+                    Forms\Components\Toggle::make('activo')
+                    ->required()
+                    ->default(false),
             ]);
     }
 
@@ -94,9 +94,6 @@ class PracticaResource extends Resource
                     ->label('Comision permanente')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('empresa.nombre')
-                    ->numeric()
-                    ->sortable(),
                 
                Tables\Columns\TextColumn::make('solicitude.fecha_inicio')
                ->label(  'Inicio de desarrollo'  )
@@ -107,7 +104,14 @@ class PracticaResource extends Resource
                 ->numeric()
                 ->sortable(),    
                 Tables\Columns\TextColumn::make('estado')
-                    ->searchable(),
+                    ->searchable()
+                     ->color(fn ($state) => $state === 'Desaprobado' ? 'danger' : null),
+                Tables\Columns\IconColumn::make('activo')
+                    ->label('Activo')
+                    ->boolean()
+                    ->trueColor('primary')   
+                    ->falseColor('success')   
+                    ->tooltip(fn ($record) => $record->activo ? 'Finalizado con éxito' : 'En proceso'),       
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

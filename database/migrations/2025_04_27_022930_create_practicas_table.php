@@ -17,9 +17,8 @@ return new class extends Migration
             $table->foreignId('docente_id')->nullable()->constrained('docentes')->onDelete('set null'); // asesor
             $table->foreignId('solicitude_id')->nullable()->constrained('solicitudes')->onDelete('set null');
             $table->foreignId('plan_practica_id')->nullable()->constrained('plan_practicas')->onDelete('set null');
-            $table->foreignId('empresa_id')->nullable()->constrained('empresas')->onDelete('set null');
             $table->string('estado', 50);
-            
+            $table->boolean('activo')->default(true);
             $table->timestamps();
         });
     }

@@ -16,7 +16,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class LineaInvestigacionResource extends Resource
 {
     protected static ?string $model = LineaInvestigacion::class;
-
+    protected static ?string $navigationGroup = 'Estudiante';
+    protected static ?string $navigationLabel = 'Linea de investigación';
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
 
     public static function form(Form $form): Form

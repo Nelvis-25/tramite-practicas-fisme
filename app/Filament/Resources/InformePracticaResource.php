@@ -10,6 +10,7 @@ use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
 use Filament\Tables\Table;
@@ -116,7 +117,84 @@ class InformePracticaResource extends Resource
                     ->dateTime()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('estado')
+                ->label('Evaluación') 
                     ->searchable(),
+                    Tables\Columns\TextColumn::make('observaciones')
+                    ->label('Sustentación')
+                    ->wrap()
+                    ->html()
+                    ->formatStateUsing(function ($state) {
+                        if (empty($state)) {
+                            return '<span style="color: gray;"><em>Por sustentar</em></span>'; 
+                            
+                        }
+                        return preg_replace(
+                            '/Reprogramado/',
+                            '<span class="font-bold text-danger">Reprogramado </span>',
+                            nl2br(e($state))
+                        );
+                    })
+                   
+                    ->sortable()
+                    ->extraAttributes([
+                        'style' => 'width: 160px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; word-wrap: break-word;',
+                    ]),
+                IconColumn::make('semaforo')
+                    ->label('Semáforo')
+                    ->getStateUsing(fn () => true)
+                    ->icon(function ($record) {
+                        if (!$record->created_at) {
+                            return 'heroicon-o-check-circle';
+                        }
+                
+                        if ($record->fecha_sustentacion) {
+                            $dias = \Carbon\Carbon::parse($record->created_at)
+                                ->diffInWeekdays($record->fecha_sustentacion);
+                            return ($dias <= 15) ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle';
+                        }
+                
+                        $fechaLimite = \Carbon\Carbon::parse($record->created_at)->addWeekdays(15);
+                        return now()->gt($fechaLimite) ? 'heroicon-o-x-circle' : 'heroicon-o-clock';
+                    })
+                    ->color(function ($record) {
+                        if (!$record->created_at) {
+                            return null;
+                        }
+                
+                        if ($record->fecha_sustentacion) {
+                            $dias = \Carbon\Carbon::parse($record->created_at)
+                                ->diffInWeekdays($record->fecha_sustentacion);
+                            return ($dias <= 15) ? 'success' : 'danger';
+                        }
+                
+                        $fechaLimite = \Carbon\Carbon::parse($record->created_at)->addWeekdays(15);
+                        return now()->gt($fechaLimite) ? 'danger' : 'success';
+                    })
+                    ->tooltip(function ($record) {
+                        if (!$record->created_at) {
+                            return 'Esperando fecha de inicio';
+                        }
+                
+                        if ($record->fecha_sustentacion) {
+                            $dias = \Carbon\Carbon::parse($record->created_at)
+                                ->diffInWeekdays($record->fecha_sustentacion);
+                    
+                            if ($dias <= 15) {
+                                return "Cumplió: {$dias} días hábiles";
+                            } else {
+                                $exceso = $dias - 15;
+                                return "Incumplió: se excedió {$exceso} días hábiles";
+                            }
+                        }
+                
+                        $fechaLimite = \Carbon\Carbon::parse($record->created_at)->addWeekdays(15);
+                        $diasRestantes = now()->diffInWeekdays($fechaLimite, false);
+                
+                        return ($diasRestantes > 0)
+                            ? "Plazo: {$diasRestantes} días hábiles restantes"
+                            : "¡Plazo vencido hace " . abs($diasRestantes) . " días hábiles!";
+                    }),
+                
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -127,7 +205,7 @@ class InformePracticaResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                
             ])
             ->actions([
                 Tables\Actions\Action::make('actualizar_fechas')
@@ -139,7 +217,7 @@ class InformePracticaResource extends Resource
                 ->form([
                     Forms\Components\DatePicker::make('fecha_resolucion')
                         ->label('Fecha Resolución')
-                        ->required(),
+                        ,
                         
                     Forms\Components\DatePicker::make('fecha_entrega_a_docentes')
                         ->label('Fecha Entrega Docentes')
@@ -147,13 +225,26 @@ class InformePracticaResource extends Resource
                         
                     Forms\Components\DateTimePicker::make('fecha_sustentacion')
                         ->label('Fecha Sustentación')
-                        ->required(),
+                        ,
                 ])
                 ->action(function (InformePractica $record, array $data) {
+                    if (empty($record->fecha_sustentacion) && !empty($data['fecha_sustentacion'])) {
+                        $data['observaciones'] = 'Por sustentar';
+                    }
+                    if ($record->fecha_sustentacion && $record->fecha_sustentacion != $data['fecha_sustentacion']) {
+                        $fechaAnterior = \Carbon\Carbon::parse($record->fecha_sustentacion)->format('d/m/Y H:i');
+                        $fechaNueva = \Carbon\Carbon::parse($data['fecha_sustentacion'])->format('d/m/Y H:i');
+                
+                        $data['observaciones'] = "Reprogramado de: {$fechaAnterior} para la fecha: {$fechaNueva}";
+                    }
+                    if (!isset($data['observaciones'])) {
+                        $data['observaciones'] = $record->observaciones;
+                    }
+                
                     $record->update($data);
-                    
+                
                     Notification::make()
-                        ->title('Fechas asignada  correctamente')
+                        ->title('Fechas insertadas correctamente')
                         ->success()
                         ->send();
                 }),
@@ -184,4 +275,4 @@ class InformePracticaResource extends Resource
             'edit' => Pages\EditInformePractica::route('/{record}/edit'),
         ];
     }
-}
+}  
