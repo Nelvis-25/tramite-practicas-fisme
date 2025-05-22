@@ -25,7 +25,7 @@
           <div class="w-1/2 pr-10 text-right transform transition duration-500 hover:scale-105 opacity-{{ empty($fechaCreacion) ? '50' : '100' }}">
               <div class="bg-blue-50 dark:bg-gray-800 p-4 rounded-xl shadow-md border-l-4 border-blue-500 dark:border-blue-400 inline-block">
                   <h3 class="text-xl font-bold {{ empty($fechaCreacion) ? 'text-gray-500 dark:text-gray-200' : 'text-blue-600 dark:text-blue-300' }} mb-2">
-                      1. Enviado
+                      1. Solicitd de plan de práctica:
                   </h3>
       
                   @if(empty($fechaCreacion))
@@ -148,7 +148,7 @@
                 <div class="bg-blue-50 dark:bg-gray-800 p-4 rounded-xl shadow-md border-l-4 border-blue-500 dark:border-blue-400 inline-block">
                     
                     <h3 class="text-xl font-bold mb-2 {{ empty($jurados) ? 'text-gray-500 dark:text-gray-400' : 'text-blue-600 dark:text-blue-400' }}">
-                        3. Jurados encargados de evaluar su plan de prácticas:
+                        3. Comisión permanente asignado(a):
                     </h3>
 
                     @if(empty($jurados))
@@ -162,7 +162,7 @@
                       </span>
                     </div>
                     @else
-                        <ul class="text-gray-700 dark:text-gray-100 list-disc ml-4">
+                        <ul class="text-gray-700 dark:text-gray-100 list-none ml-4">
                             @foreach($jurados as $jurado)
                                 <li>
                                     <strong class="text-gray-900 dark:text-white">{{ $jurado['cargo'] }}:</strong>
@@ -236,15 +236,15 @@
                 </p>
         
               @else
-                <p class="text-gray-600 dark:text-gray-300 mb-3 flex items-center">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 mr-2">
+                <div class="mt-2 flex justify-start">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">
                     <svg class="mr-1 h-2 w-2 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 8 8">
                       <circle cx="4" cy="4" r="3" />
                     </svg>
                     Pendiente
+                    <p class="text-gray-600 dark:text-gray-300 ml-2">Aún no se a programada la fecha de sustentación.</p>
                   </span>
-                  Aún no se ha programado la fecha de la sustentación.
-                </p>
+                </div>
               @endif
         
               @if($observaciones)
@@ -259,6 +259,26 @@
           </div>
         </div>
         
+        <!-- Estado 5: Finalizado -->
+          <div class="flex items-center justify-start relative">
+            <div class="w-1/2 pr-10 text-right transform transition duration-500 hover:scale-105 opacity-50">
+              <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl shadow-md border-l-4 border-gray-500 inline-block">
+                <h3 class="text-xl font-bold text-gray-600 dark:text-gray-400 mb-2">5. Finalizado</h3>
+                <p class="text-gray-600 dark:text-gray-300">Tus prácticas fueron finalizadas con éxito. ¡Felicidades!</p>
+                <div class="mt-2 flex justify-end">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                    Pendiente
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="relative z-20 flex items-center justify-center w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full border-4 border-white dark:border-gray-800 shadow-lg transform transition duration-500 hover:scale-110">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div class="w-1/2"></div>
+          </div>
       
         </div>
     </div>

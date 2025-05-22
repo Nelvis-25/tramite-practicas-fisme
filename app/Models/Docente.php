@@ -44,10 +44,7 @@ class Docente extends Model
     {
         return $this->hasMany(IntegranteComision::class);
     }
-    public function integrante(): hasMany
-    {
-        return $this->hasMany(Integrante::class);
-    }
+    
     public function solicitude()
 {
     return $this->hasMany(Solicitude::class);
@@ -56,5 +53,10 @@ class Docente extends Model
 {
     return $this->hasMany(Practica::class, 'docente_id');
 }
+ // aca coloco la relacion con los jurados : 
+ public function jurados()
+    {
+        return $this->hasMany(JuradoDeInforme::class);
+    }
 
 }

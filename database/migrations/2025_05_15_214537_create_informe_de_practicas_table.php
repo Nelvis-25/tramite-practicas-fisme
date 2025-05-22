@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('informe_practicas', function (Blueprint $table) {
+        Schema::create('informe_de_practicas', function (Blueprint $table) {
             $table->id();
             $table->foreignId('solicitud_informe_id')->constrained('solicitud_informes')->onDelete('cascade');
-            $table->foreignId('jurado_informe_id')->constrained('jurado_informes')->onDelete('cascade');
             $table->date('fecha_resolucion')->nullable();
+             $table->string('resolucion')->nullable();
             $table->date('fecha_entrega_a_docentes')->nullable();
             $table->datetime('fecha_sustentacion')->nullable();
             $table->string('observaciones', 200)->nullable();
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('informe_practicas');
+        Schema::dropIfExists('informe_de_practicas');
     }
 };

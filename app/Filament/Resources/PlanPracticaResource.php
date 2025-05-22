@@ -136,8 +136,7 @@ class PlanPracticaResource extends Resource
                     ->dateTime()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('estado')
-                    ->searchable()
-                    ->label('Evaluación') 
+                    ->label('Estado') 
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('observaciones')
@@ -234,13 +233,13 @@ class PlanPracticaResource extends Resource
                 Action::make('actualizar_fechas')
                 ->label('Asignar fecha')
                 ->icon('heroicon-o-calendar')
-                ->modalHeading('Actualizar Fechas Clave')
+                ->modalHeading(' ')
+                ->requiresConfirmation()
+                ->modalIcon('heroicon-o-calendar-days')
+                ->modalHeading('ASIGNAR FECHAS')
                 ->modalSubmitActionLabel('Guardar')
-                ->modalWidth('sm')
+                ->modalWidth('md')
                 ->form([
-                    Forms\Components\DatePicker::make('fecha_resolucion')
-                        ->label('Fecha Resolución')
-                        ,
                     
                     Forms\Components\DatePicker::make('fecha_entrega_a_docentes')
                         ->label('Fecha Entrega Docentes'),
@@ -249,37 +248,96 @@ class PlanPracticaResource extends Resource
                         ->label('Fecha Sustentación')
                         ,
                 ])
-                ->action(function (PlanPractica $record, array $data) {
-                    // Si antes no tenía fecha de sustentación y ahora se asigna una, colocar "Por sustentar"
-                    if (empty($record->fecha_sustentacion) && !empty($data['fecha_sustentacion'])) {
-                        $data['observaciones'] = 'Por sustentar';
+               ->action(function (PlanPractica $record, array $data) {
+                    $datosActualizar = [];
+
+                    if (!empty($data['fecha_entrega_a_docentes'])) {
+                        $datosActualizar['fecha_entrega_a_docentes'] = $data['fecha_entrega_a_docentes'];
                     }
-                
-                    // Verificar si la fecha de sustentación está siendo modificada (reprogramación)
-                    if ($record->fecha_sustentacion && $record->fecha_sustentacion != $data['fecha_sustentacion']) {
-                        $fechaAnterior = \Carbon\Carbon::parse($record->fecha_sustentacion)->format('d/m/Y H:i');
-                        $fechaNueva = \Carbon\Carbon::parse($data['fecha_sustentacion'])->format('d/m/Y H:i');
-                
-                        $data['observaciones'] = "Reprogramado de: {$fechaAnterior} para la fecha: {$fechaNueva}";
+
+                    if (!empty($data['fecha_sustentacion'])) {
+                        $datosActualizar['fecha_sustentacion'] = $data['fecha_sustentacion'];
+                        if (empty($record->fecha_sustentacion)) {
+                            $datosActualizar['observaciones'] = 'Por sustentar';
+                        }
+
+                       
+                        if ($record->fecha_sustentacion && $record->fecha_sustentacion != $data['fecha_sustentacion']) {
+                            $fechaAnterior = \Carbon\Carbon::parse($record->fecha_sustentacion)->format('d/m/Y H:i');
+                            $fechaNueva = \Carbon\Carbon::parse($data['fecha_sustentacion'])->format('d/m/Y H:i');
+                            $datosActualizar['observaciones'] = "Reprogramado de: {$fechaAnterior} para la fecha: {$fechaNueva}";
+                        }
                     }
-                
-                    // Si no hay reprogramación ni asignación, mantener observación actual
-                    if (!isset($data['observaciones'])) {
-                        $data['observaciones'] = $record->observaciones;
+
+                    if (!isset($datosActualizar['observaciones'])) {
+                        $datosActualizar['observaciones'] = $record->observaciones;
                     }
-                
-                    $record->update($data);
-                
+
+                    if (!empty($datosActualizar)) {
+                        $record->update($datosActualizar);
+                    }
+
                     Notification::make()
-                        ->title('Fechas insertadas correctamente')
+                        ->title('Fechas actualizadas correctamente')
                         ->success()
                         ->send();
-                }),
+                        
+                })
+                ->modalSubmitActionLabel('Guardar')
+                ->modalCancelActionLabel('Cancelar'),
                 
-            
+                 Action::make('asignar_resolucion')
+                    ->label('Asignar Resolución')
+                    ->icon('heroicon-o-document-check')
+                    ->modalHeading(' ')
+                    ->modalHeading('ASIGNAR RESOLUCIÓN')
+                    ->requiresConfirmation()
+                    ->modalIcon('heroicon-o-clipboard-document-check')
+                    ->modalSubmitActionLabel('Guardar')
+                    ->modalWidth('md')
+                    ->form([
+                        Forms\Components\DatePicker::make('fecha_resolucion')
+                            ->label('Fecha de Resolución')
+                            ,
+
+                        Forms\Components\FileUpload::make('resolucion')
+                            ->label('Archivo de Resolución')
+                            ->acceptedFileTypes(['application/pdf'])
+                            ->maxSize(10000) 
+                            ->directory('resoluciones') // carpeta de almacenamiento
+                            ,
+                    ])
+                    ->action(function ($record, array $data) {
+                        $camposActualizados = [];
+                        if (!empty($data['fecha_resolucion'])) {
+                            $camposActualizados['fecha_resolucion'] = $data['fecha_resolucion'];
+                        }
+
+                        if (!empty($data['resolucion'])) {
+                            $camposActualizados['resolucion'] = $data['resolucion'];
+                        }
+
+                        if (!empty($camposActualizados)) {
+                            $record->update($camposActualizados);
+
+                            Notification::make()
+                                ->title('Resolución asignada correctamente')
+                                ->success()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('No se ingresaron cambios')
+                                ->warning()
+                                ->send();
+                        }
+                    })
+                    ->modalSubmitActionLabel('Guardar')
+                    ->modalCancelActionLabel('Cancelar'),
+
+
                 Action::make('descargar_carta')
-                ->label('Descargar carta')
-                ->icon('heroicon-o-arrow-down')
+                ->label('')
+                //->icon('heroicon-o-arrow-down')
                 ->action(function ($record) {
                     $templatePath = storage_path('app/public/plantillas/carta.docx');
                     

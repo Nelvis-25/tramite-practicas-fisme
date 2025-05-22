@@ -14,6 +14,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Tables;
+use Livewire\Livewire;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -257,73 +258,88 @@ class SolicitudeResource extends Resource
                 
                 Tables\Actions\EditAction::make(),
                 Action::make('Validar')
-                ->label('Validar')
-                ->icon('heroicon-o-check-circle')  
-                ->color('success')
-                ->form([
-                
-                    Forms\Components\Placeholder::make('lista_requisitos')
-                        ->label('Requisitos registrados')
-                        ->content(function () {
-                            return Requisito::all()
-                                ->pluck('nombre')
-                                ->map(fn($item) => '• ' . trim($item)) // eliminamos espacios extra
-                                ->implode("\n");
-                        })
-                        ->extraAttributes([
-                            'style' => 'white-space: pre-wrap; line-height: 1.5; font-family: sans-serif;',
-                              'class' => 'border border-gray-300 rounded-lg p-4',
-                        ]),
-              
-                    Forms\Components\Group::make([
+                    ->label('Validar')
+                    ->icon('heroicon-o-check-circle')  
+                    ->color('success')
+                    ->modalHeading(' ')
+                    ->modalHeading('VALIDACIÓN DE LA SOLICITUD')
+                    ->requiresConfirmation()
+                    ->modalIcon('heroicon-o-clipboard-document-check')
+                    ->modalSubmitActionLabel('Guardar')
+                    ->modalWidth('md')
+                    ->form([
+                        Forms\Components\Placeholder::make('lista_requisitos')
+                            ->label('Requisitos registrados')
+                            ->content(function () {
+                                return Requisito::all()
+                                    ->pluck('nombre')
+                                    ->map(fn($item) => '• ' . trim($item))
+                                    ->implode("\n");
+                            })
+                            ->extraAttributes([
+                                'style' => 'white-space: pre-wrap; line-height: 1.5; font-family: sans-serif;',
+                                'class' => 'border border-gray-300 rounded-lg p-4',
+                            ]),
+
                         Forms\Components\Radio::make('decision')
                             ->label('Seleccione una opción:')
                             ->options([
-                                'validado' => ' Aceptar Solicitud',
-                                'rechazado' => ' Rechazar Solicitud',
+                                'validado' => 'Aceptar Solicitud',
+                                'rechazado' => 'Rechazar Solicitud',
                             ])
                             ->required()
-                            //->inline(false)
-                             ->columnSpanFull()
+                            ->reactive()
+                            ->columnSpanFull()
                             ->extraAttributes([
-                                'class' => 'flex justify-center gap-4 border rounded-lg p-4 mt-2',
+                                'class' => 'font-bold flex justify-center gap-4 border border-gray-300 rounded-lg p-4 mt-2',
                             ]),
+
+                        // Textarea para motivo de rechazo, visible solo si se selecciona 'rechazado'
+                        Forms\Components\Textarea::make('motivo_rechazo')
+                            ->label('Motivo del rechazo')
+                            ->placeholder('Explique por qué se rechazó la solicitud...')
+                            ->columnSpanFull()
+                            ->rows(4)
+                            ->maxLength(500)
+                            ->visible(fn ($get) => $get('decision') === 'rechazado')
+                            ->requiredIf('decision', 'rechazado'),
                     ])
-                ])
-                ->action(function (Solicitude $record, array $data) {
-                    $decision = $data['decision'];
-                
-                    if ($decision === 'validado') {
-                        $record->update([
-                            'estado' => 'Validado',
-                        ]);
-                
-                        Notification::make()
-                            ->title(' Solicitud Aceptada')
-                            ->success()
-                            ->send();
-                    } elseif ($decision === 'rechazado') {
-                        $record->update([
-                            'estado' => 'Rechazado',
-                        ]);
-                
-                        Notification::make()
-                            ->title('Solicitud Rechazada')
-                            ->danger()
-                            ->send();
-                    }
-                })
-                ->modalHeading('Confirmar decisión')
-                ->modalDescription(function (array $data) {
-                    return match ($data['decision'] ?? null) {
-                        'validado' => '¿Estás seguro de que deseas  **aceptar** esta solicitud?',
-                        'rechazado' => '¿Estás seguro de que deseas  **rechazar** esta solicitud?',
-                        default => 'Confirma tu decisión antes de continuar.',
-                    };
-                })
-                ->modalSubmitActionLabel('Sí, confirmar')
-                ->modalCancelActionLabel('Cancelar')
-                ->requiresConfirmation()
+                    ->action(function (Solicitude $record, array $data) {
+                        $decision = $data['decision'];
+
+                        if ($decision === 'validado') {
+                            $record->update([
+                                'estado' => 'Validado',
+                            ]);
+
+                            Notification::make()
+                                ->title('Solicitud Aceptada')
+                                ->success()
+                                ->send();
+                        }
+
+                        if ($decision === 'rechazado') {
+                            $record->update([
+                                'estado' => 'Rechazado',
+                            ]);
+
+                            // Guardar el motivo como observación
+                            $record->observacions()->create([
+                                'mensaje' => $data['motivo_rechazo'],
+                                'user_id' => auth()->id(),
+                            ]);
+
+                            Notification::make()
+                                ->title('Solicitud Rechazada')
+                                ->body('Se registró el motivo del rechazo.')
+                                ->danger()
+                                ->send();
+                        }
+                    })
+                    ->modalSubmitActionLabel('Guardar')
+                    ->modalCancelActionLabel('Cancelar')
+                    
+               
                 ->visible(function () {
                     /** @var \App\Models\User $user */
                     $user = auth()->user();
@@ -331,22 +347,27 @@ class SolicitudeResource extends Resource
                     return !$user?->hasRole('Estudiante');
                 })
                 ,
-                Action::make('notas')
-                ->label('Observacion')
+              Action::make('notas')
+                ->label('')
                 ->icon('heroicon-o-chat-bubble-left')
-                
-                ->modalWidth('xl')
-                ->modalHeading(fn ($record) => "Notas de Solicitud #{$record->id}")
+                ->modalHeading(' ')
+                ->modalHeading('HISTORIAL DE OBSERVACIONES')
+                ->modalWidth('md')
                 ->form([
                     Forms\Components\Repeater::make('notas_existentes')
-                        ->label('Historial de Notas')
+                        ->label('')
                         ->schema([
                             Forms\Components\Textarea::make('mensaje')
                                 ->disabled()
                                 ->columnSpanFull()
-                                ->extraAttributes(['class' => 'bg-black-500'])
+                                
+                                ->extraAttributes([
+                                    'class' => 'bg-gray-100 text-gray-500 rounded-lg p-1 border border-gray-300 resize-none',
+                                   
+                                ])
                                 ->formatStateUsing(fn ($state) => $state), // Muestra solo el mensaje
-                        ])
+                                
+                                ])
                         ->dehydrated(false)
                         ->disabled()
                         ->collapsible()
@@ -355,37 +376,26 @@ class SolicitudeResource extends Resource
                                 ? date('d/m/Y H:i', strtotime($state['created_at'])) // Muestra fecha y hora en el ítem
                                 : null
                         )
-                        ->default(fn ($record) => $record->observacions()
-                            ->orderBy('created_at', 'desc')
-                            ->get()
-                            ->toArray()
-                        ),
+                            ->default(function ($record) {
+                                return $record->observacions()
+                                    ->orderBy('created_at', 'desc')
+                                    ->get()
+                                    ->map(function ($mensaje) {
+                                        return [
+                                            'mensaje' => $mensaje->mensaje,  // Asegúrate que este sea el campo correcto
+                                            'created_at' => $mensaje->created_at,
+                                        ];
+                                    })
+                                    ->toArray();
+                            })
                         
-                    Forms\Components\Textarea::make('nueva_nota')
-                        ->label('Nueva Nota')
-                        ->placeholder('Escribe aquí tu nota...')
-                        ->required()
-                        ->minLength(5)
-                        ->maxLength(500)
-                        ->columnSpanFull()
                 ])
-                ->action(function (Solicitude $record, array $data) {
-                    $record->observacions()->create([
-                        'mensaje' => $data['nueva_nota'],
-                        'user_id' => auth()->id()
-                    ]);
-                    
-                    Notification::make()
-                        ->title('Nota agregada correctamente')
-                        ->body('La nota ha sido registrada en el sistema.')
-                        ->success()
-                        ->send();
-                })
-                ->modalSubmitActionLabel('Guardar Nota')
-                ->modalCancelActionLabel('Cerrar'),
+                    ->modalCancelActionLabel('Cerrar')
+                   ->modalSubmitActionLabel('Salir')
+                ,
 
                 Action::make('Asignar Jurado')
-                ->label('Asignar Jurado')
+                ->label('Asignar Comisión')
                 ->icon('heroicon-o-user-group')
                 ->requiresConfirmation()
                 ->color('primary')
@@ -446,7 +456,7 @@ class SolicitudeResource extends Resource
                     /** @var User $user */
                     return !$user?->hasRole('Estudiante');
                 }), 
-              
+                
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

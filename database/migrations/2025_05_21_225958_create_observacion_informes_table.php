@@ -11,12 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('jurado_informes', function (Blueprint $table) {
+        Schema::create('observacion_informes', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre', 100);
-            $table->date('fechainicio')->nullable();
-            $table->date('fechafin')->nullable(); 
-            $table->boolean('estado');
+            $table->foreignId('solicitud_informe_id')->constrained('solicitud_informes')->onDelete('cascade');
+            $table->string('observacion', 900)->nullable();
             $table->timestamps();
         });
     }
@@ -26,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('jurado_informes');
+        Schema::dropIfExists('observacion_informes');
     }
 };

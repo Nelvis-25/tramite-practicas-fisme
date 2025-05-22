@@ -11,12 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('integrantes', function (Blueprint $table) {
+        Schema::create('jurado_de_informes', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('jurado_informe_id');
-            $table->foreign('jurado_informe_id')->references('id')->on('jurado_informes')->onDelete('cascade');
-            $table->unsignedBigInteger('docente_id');
-            $table->foreign('docente_id')->references('id')->on('docentes')->onDelete('cascade');
+            $table->foreignId('informe_de_practica_id')->constrained('informe_de_practicas')->onDelete('cascade');
+            $table->foreignId('docente_id')->constrained('docentes')->onDelete('cascade');
             $table->enum('cargo', ['Secretario', 'Presidente', 'Vocal', 'Accesitario']);
             $table->timestamps();
         });
@@ -27,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('integrantes');
+        Schema::dropIfExists('jurado_de_informes');
     }
 };

@@ -72,14 +72,11 @@ class EvaluacionPlanDePractica extends Model
         } else {
             $nuevoEstado = 'Aprobado';
         }
-
-        // ✅ Actualizar el estado del plan
         $plan->updateQuietly([
             'estado' => $nuevoEstado,
             'observaciones' => 'Sustentado',
         ]);
 
-        // ✅ Eliminar automáticamente las evaluaciones pendientes (como la del Accesitario)
         $plan->evaluaciones()
             ->where('estado', 'Pendiente')
             ->delete();

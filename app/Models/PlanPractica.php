@@ -13,6 +13,7 @@ class PlanPractica extends Model
         'solicitude_id',
         'comision_permanente_id',
         'fecha_resolucion',
+        'resolucion',
         'fecha_entrega_a_docentes',
         'fecha_sustentacion',
         'observaciones',

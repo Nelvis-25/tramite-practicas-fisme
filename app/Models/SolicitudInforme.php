@@ -32,11 +32,14 @@ class SolicitudInforme extends Model
     {
         return $this->belongsTo(Practica::class);
     }
-    public function informePracticas()
+
+    public function informedePractica()    
+        {
+           return $this->hasMany(InformeDePractica::class,);
+        }
+    public function observaciones()
     {
-        return $this->hasMany(InformePractica::class, 'solicitud_informe_id');
+        return $this->hasMany(ObservacionInforme::class, 'solicitud_informe_id');
     }
 
-
-         
 }

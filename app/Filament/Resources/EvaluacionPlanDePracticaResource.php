@@ -182,11 +182,14 @@ class EvaluacionPlanDePracticaResource extends Resource
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('observacion')
+                    ->label('Observaciones')
+                    ->formatStateUsing(fn ($state) => nl2br(e($state))) // Convierte saltos de línea en <br>
+                    ->html() // Permite mostrar HTML
                     ->searchable()
                     ->extraAttributes([
-                        'style' => 'width: 160px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; word-wrap: break-word;',
-                    ]),
-                    Tables\Columns\TextColumn::make('updated_at')
+                    'style' => 'width: 300px;  pre-wrap; word-wrap: break-word;',
+                                    ]),
+                Tables\Columns\TextColumn::make('updated_at')
                     ->label('Fecha de evaluación')
                     ->dateTime()
                     ->sortable()
@@ -210,60 +213,70 @@ class EvaluacionPlanDePracticaResource extends Resource
                 //
             ])
             ->actions([
-                Action::make('evaluar')
-                ->label('Evaluar')
-                ->icon('heroicon-o-document-check')
-                ->color('primary')
-                ->modalHeading('')
-                ->modalSubmitActionLabel('Confirmar')
-                 ->visible(fn ($record) => $record->estado !== 'Aprobado')
-                ->modalWidth('2xl')
-                ->form([
-                    Forms\Components\Placeholder::make('')
-                        ->content('📝 Evaluar Plan de práctica')
-                        ->extraAttributes([
-                            'class' => 'text-center text-xl font-bold mb-2',
+                                    Action::make('evaluar')
+                        ->label('Evaluar ')
+                        ->icon('heroicon-o-document-check')
+                        ->modalHeading('EVALUACIÓN DEL PLAN DE PRÁCTICA')
+                        ->requiresConfirmation()
+                        ->modalIcon('heroicon-o-clipboard-document-check')
+                        ->modalSubmitActionLabel('Guardar')
+                        ->modalWidth('md')
+                        ->visible(fn ($record) => $record->estado !== 'Aprobado')
+                        ->form([
+                            Forms\Components\Radio::make('estado')
+                                ->label('Resultado de la Evaluación')
+                                ->options([
+                                    'Aprobado' => 'Aprobado', 
+                                    'Observado' => 'Observado',
+                                    'Desaprobado' => 'Desaprobado',
+                                ])
+                                ->reactive() // ⚠️ clave para que se actualicen los campos dependientes
+                                ->required()
+                                ->columnSpanFull()
+                                 ->extraAttributes([
+                                'class' => 'font-bold flex justify-center gap-4 border border-gray-300 rounded-lg p-4 mt-2',
+                                  ])
+                                ->afterStateUpdated(function (callable $set, $state) {
+                                    if ($state === 'Aprobado') {
+                                        $set('observacion', null);
+                                    }
+                                }),
+
+                            Forms\Components\Textarea::make('observacion')
+                                ->label('Observaciones')
+                                ->placeholder('Escribe tus observaciones aquí...')
+                                ->rows(5)
+                                ->reactive() // permite que se actualice con cambios en estado
+                                ->required(fn ($get) => in_array($get('estado'), ['Observado', 'Desaprobado']))
+                                ->visible(fn ($get) => in_array($get('estado'), ['Observado', 'Desaprobado'])) // ⚠️ esto lo oculta si es Aprobado
+                                ->dehydrated(fn ($get) => $get('estado') !== 'Aprobado')
+                                ->columnSpanFull()
+                                ->extraInputAttributes(['class' => 'mt-4']),
                         ])
-                        ->columnSpanFull(),
-            
-                    Forms\Components\Group::make([
-                        Forms\Components\Radio::make('estado')
-                            ->label('Resultado de la Evaluación')
-                            ->options([
-                                'Aprobado' => 'Aprobado', 
-                                'Observado' => 'Observado',
-                                'Desaprobado' => 'Desaprobado',
-                            ])
-                            ->required()
-                            ->columnSpanFull()
-                            ->extraAttributes([
-                                'class' => 'flex justify-center gap-4 border rounded-lg p-4 mt-2',
-                            ])
-                            ->afterStateUpdated(function (callable $set, $state) {
-                                if ($state === 'Aprobado') {
-                                    $set('observacion', null);
-                                }
-                            }),
-                    ])
-                    ->columnSpanFull(),
-            
-                    Forms\Components\Textarea::make('observacion')
-                    ->placeholder('Escribe tus observaciones aquí...')
-                    ->rows(5)
-                    ->disabled(fn ($get) => $get('estado') === 'Aprobado')
-                    ->required(fn ($get) => in_array($get('estado'), ['Desaprobado', 'Observado']))
-                    ->dehydrated(fn ($get) => $get('estado') !== 'Aprobado') // ⬅️ esta línea soluciona el problema
-                    ->columnSpanFull()
-                    ->extraInputAttributes(['class' => 'mt-4']),
-                    
-                ])
-                ->action(function ($record, $data) {
-                    $record->update([
-                        'estado' => $data['estado'],
-                        'observacion' => $data['estado'] === 'Aprobado' ? null : ($data['observacion'] ?? null),
-                        'activo' => $data['estado'] === 'Aprobado',
-                    ]);
-                }),
+                        ->action(function ($record, $data) {
+                            if ($data['estado'] === 'Aprobado') {
+                                // Si está aprobado, se limpia la observación
+                                $record->update([
+                                    'estado' => 'Aprobado',
+                                    'observacion' => null,
+                                    'activo' => true,
+                                ]);
+                            } else {
+                                // Acumular observaciones anteriores con las nuevas
+                                $observacionAnterior = $record->observacion ?? '';
+                                $nuevaObservacion = "-  " . trim($data['observacion']);
+                                // Si ya había observaciones, las concatenamos
+                                $observacionFinal = $observacionAnterior 
+                                    ? $observacionAnterior . "\n" . $nuevaObservacion 
+                                    : $nuevaObservacion;
+
+                                $record->update([
+                                    'estado' => $data['estado'],
+                                    'observacion' => $observacionFinal,
+                                    'activo' => false,
+                                ]);
+                            }
+                        }),
             
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

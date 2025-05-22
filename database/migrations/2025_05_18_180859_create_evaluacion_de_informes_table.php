@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('evaluacion_informes', function (Blueprint $table) {
+        Schema::create('evaluacion_de_informes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('informe_practica_id')->constrained('informe_practicas')->onDelete('cascade');
-            $table->foreignId('integrante_id')->constrained('integrantes')->onDelete('cascade');
+            $table->foreignId('informe_de_practica_id')->constrained('informe_de_practicas')->onDelete('cascade');
+            $table->foreignId('jurado_de_informe_id')->constrained('jurado_de_informes')->onDelete('cascade');
             $table->date('fecha_evaluacion')->nullable();
-            $table->string('observacion', 600)->nullable(); 
+            $table->string('observacion', 900)->nullable(); 
             $table->enum('estado', ['Pendiente', 'Aprobado', 'Desaprobado', 'Observado']);
             $table->boolean('activo')->default(true);
             $table->timestamps();
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('evaluacion_informes');
+        Schema::dropIfExists('evaluacion_de_informes');
     }
 };

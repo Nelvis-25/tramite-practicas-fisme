@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('solicitude_id')->constrained('solicitudes')->onDelete('cascade');
             $table->foreignId('comision_permanente_id')->constrained('comision_permanentes')->onDelete('cascade');
             $table->date('fecha_resolucion')->nullable();
+            $table->string('resolucion')->nullable();
             $table->date('fecha_entrega_a_docentes')->nullable();
             $table->datetime('fecha_sustentacion')->nullable();
             $table->string('observaciones', 200)->nullable();
