@@ -9,6 +9,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -181,28 +182,51 @@ class EvaluacionPlanDePracticaResource extends Resource
                     ->formatStateUsing(fn ($state, $record) => $state . ' - ' . $record->integranteComision->cargo)
                     ->sortable(),
                 
-                Tables\Columns\TextColumn::make('observacion')
-                    ->label('Observaciones')
-                    ->formatStateUsing(fn ($state) => nl2br(e($state))) // Convierte saltos de línea en <br>
-                    ->html() // Permite mostrar HTML
-                    ->searchable()
-                    ->extraAttributes([
-                    'style' => 'width: 300px;  pre-wrap; word-wrap: break-word;',
-                                    ]),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Fecha de evaluación')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('observaciones')
+                    ->label('Observaciones')
+                     ->formatStateUsing(function ($record) {
+                    $observaciones = $record->observaciones()->pluck('observacion')->toArray();
+
+                    if (count($observaciones) === 0) {
+                        return 'Sin observaciones';
+                    }
+
+                            return implode('<br>', array_map(fn($obs) => '<span style="margin-right:8px;">-</span>' . e($obs), $observaciones));
+                        })
+                        ->html()
+                        ->extraAttributes([
+                            'style' => 'width: 335px; white-space: normal; line-height: 1.5; font-family: inherit; font-size: inherit; color: inherit;',
+                        ])
+                        ->searchable(
+                    query: function (Builder $query, string $search) {
+                        $query->whereHas('observaciones', function (Builder $subQuery) use ($search) {
+                            $subQuery->where('observacion', 'like', "%{$search}%");
+                        });
+                    }),
+             
                 Tables\Columns\TextColumn::make('estado')
                 ->label('Calificación')
                 ->searchable()
                  ->color(fn ($state) => $state === 'Desaprobado' ? 'danger' : null)
                 ,
-                Tables\Columns\IconColumn::make('activo')
+                 Tables\Columns\IconColumn::make('activo')
                     ->label('Estado')
                     ->boolean()
-                    ->color(fn (bool $state) => $state ? 'primary' : 'gray'),
+                    ->color(fn (bool $state) => $state ? 'primary' : 'gray')
+                    ->tooltip(function ($record) {
+                        return match($record->estado) {
+                            'Aprobado', 'Desaprobado' => 'Evaluado',
+                            'Observado' => 'En evaluación',
+                            'Pendiente' => 'Por evaluar',
+                            default => 'Sin estado',
+                        };
+                    })
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -213,7 +237,7 @@ class EvaluacionPlanDePracticaResource extends Resource
                 //
             ])
             ->actions([
-                                    Action::make('evaluar')
+                     Action::make('evaluar')
                         ->label('Evaluar ')
                         ->icon('heroicon-o-document-check')
                         ->modalHeading('EVALUACIÓN DEL PLAN DE PRÁCTICA')
@@ -242,41 +266,68 @@ class EvaluacionPlanDePracticaResource extends Resource
                                     }
                                 }),
 
-                            Forms\Components\Textarea::make('observacion')
+                             Forms\Components\Textarea::make('observacion')
                                 ->label('Observaciones')
+                                ->columnSpanFull()
+                                ->maxLength(500)
                                 ->placeholder('Escribe tus observaciones aquí...')
                                 ->rows(5)
-                                ->reactive() // permite que se actualice con cambios en estado
-                                ->required(fn ($get) => in_array($get('estado'), ['Observado', 'Desaprobado']))
-                                ->visible(fn ($get) => in_array($get('estado'), ['Observado', 'Desaprobado'])) // ⚠️ esto lo oculta si es Aprobado
-                                ->dehydrated(fn ($get) => $get('estado') !== 'Aprobado')
+                                ->disabled(fn ($get) => $get('estado') === 'Aprobado')
+                                ->visible(fn ($get) => in_array($get('estado'), ['Observado', 'Desaprobado']))
+                                ->required(fn ($get) => in_array($get('estado'), ['Desaprobado', 'Observado']))
+                                ->reactive()
                                 ->columnSpanFull()
                                 ->extraInputAttributes(['class' => 'mt-4']),
                         ])
-                        ->action(function ($record, $data) {
-                            if ($data['estado'] === 'Aprobado') {
-                                // Si está aprobado, se limpia la observación
-                                $record->update([
-                                    'estado' => 'Aprobado',
-                                    'observacion' => null,
-                                    'activo' => true,
-                                ]);
-                            } else {
-                                // Acumular observaciones anteriores con las nuevas
-                                $observacionAnterior = $record->observacion ?? '';
-                                $nuevaObservacion = "-  " . trim($data['observacion']);
-                                // Si ya había observaciones, las concatenamos
-                                $observacionFinal = $observacionAnterior 
-                                    ? $observacionAnterior . "\n" . $nuevaObservacion 
-                                    : $nuevaObservacion;
+                         ->action(function (EvaluacionPlanDePractica $record, array $data) {
+                        $decision = $data['estado'];
 
-                                $record->update([
-                                    'estado' => $data['estado'],
-                                    'observacion' => $observacionFinal,
-                                    'activo' => false,
-                                ]);
-                            }
-                        }),
+                        if ($decision === 'Aprobado') {
+                            $record->update([
+                                'estado' => 'Aprobado',
+                                'activo' => true,
+                            ]);
+
+                            Notification::make()
+                                ->title('Evaluacion registrada con exito')
+                                ->info()
+                                ->send();
+                        }
+
+                        if ($decision === 'Observado') {
+                            $record->update([
+                                'estado' => 'Observado',
+                                'activo' => false,
+                            ]);
+                            $record->observaciones()->create([
+                                'observacion' => $data['observacion'],
+                              
+                            ]);
+
+                            Notification::make()
+                                ->title('Evaluacion registrada con exito')
+                                ->info()
+                                ->send();
+                        }
+                        if ($decision === 'Desaprobado') {
+                            $record->update([
+                                'estado' => 'Desaprobado',
+                                'activo' => true,
+                            ]);
+                            $record->observaciones()->create([
+                                'observacion' => $data['observacion'],
+                             
+                            ]);
+
+                            Notification::make()
+                                ->title('Evaluacion registrada con exito')
+                                ->info()
+                                ->send();
+                        }
+                    })
+                    
+                    ->modalSubmitActionLabel('Guardar')
+                    ->modalCancelActionLabel('Cancelar'),
             
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

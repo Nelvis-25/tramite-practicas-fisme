@@ -235,7 +235,7 @@ class SolicitudeResource extends Resource
                         // Definir el color según el estado
                         if ($state == 'Pendiente') {
                             return "<span style='color:rgb(90, 66, 26); font-weight: bold;'>$state</span>"; 
-                        } elseif ($state == 'Validado') {
+                        } elseif ($state == 'Aceptado') {
                             return "<span style='color: #10b981; font-weight: bold;'>$state</span>"; 
                         } elseif ($state == 'Rechazado') {
                             return "<span style='color: #ef4444; font-weight: bold;'>$state</span>"; 
@@ -309,7 +309,7 @@ class SolicitudeResource extends Resource
 
                         if ($decision === 'validado') {
                             $record->update([
-                                'estado' => 'Validado',
+                                'estado' => 'Aceptado',
                             ]);
 
                             Notification::make()
@@ -326,7 +326,7 @@ class SolicitudeResource extends Resource
                             // Guardar el motivo como observación
                             $record->observacions()->create([
                                 'mensaje' => $data['motivo_rechazo'],
-                                'user_id' => auth()->id(),
+                                
                             ]);
 
                             Notification::make()
@@ -347,7 +347,70 @@ class SolicitudeResource extends Resource
                     return !$user?->hasRole('Estudiante');
                 })
                 ,
-              Action::make('notas')
+
+                Action::make('Asignar Jurado')
+                ->label('Asignar Comisión')
+                ->icon('heroicon-o-user-group')
+                ->requiresConfirmation()
+                ->color('primary')
+                ->action(function ($record) {
+            
+                    // ✅ Validar que la solicitud esté en estado 'Validado'
+                    if ($record->estado !== 'Aceptado') {
+                        Notification::make()
+                            ->title('No se puede asignar jurado')
+                            ->body('No se pudo asignar una comisión debido a que esta solicitud aún no ha sido revisada o validada.')
+                            ->danger()
+                            ->send();
+            
+                        return; 
+                    }
+            
+                    $existePlan = PlanPractica::where('solicitude_id', $record->id)->exists();
+            
+                    if ($existePlan) {
+                        $record->update([
+                            'estado' => 'Comisión Asignada',
+                        ]);
+                    }
+                     else {
+                        $comisionActiva = ComisionPermanente::where('estado', true)
+                            ->where('fecha_fin', '>', now())
+                            ->first();
+            
+                        if (!$comisionActiva) {
+                            Notification::make()
+                                ->title('Sin comisión activa')
+                                ->body('No hay comisión activa disponible para asignar.')
+                                ->danger()
+                                ->send();
+            
+                            return;
+                        }
+            
+                        PlanPractica::create([
+                            'solicitude_id' => $record->id,
+                            'comision_permanente_id' => $comisionActiva->id,
+                            'estado' => 'Pendiente',
+                        ]);
+            
+                        $record->update([
+                            'estado' => 'Comisión Asignada',
+                        ]);
+                    }
+            
+                    // ✅ Notificación de éxito (opcional)
+                    Notification::make()
+                        ->title('Jurado asignado correctamente')
+                        ->success()
+                        ->send();
+                })
+                ->visible(function () {
+                    $user = auth()->user();
+                    /** @var User $user */
+                    return !$user?->hasRole('Estudiante');
+                }), 
+                Action::make('notas')
                 ->label('')
                 ->icon('heroicon-o-chat-bubble-left')
                 ->modalHeading(' ')
@@ -393,69 +456,6 @@ class SolicitudeResource extends Resource
                     ->modalCancelActionLabel('Cerrar')
                    ->modalSubmitActionLabel('Salir')
                 ,
-
-                Action::make('Asignar Jurado')
-                ->label('Asignar Comisión')
-                ->icon('heroicon-o-user-group')
-                ->requiresConfirmation()
-                ->color('primary')
-                ->action(function ($record) {
-            
-                    // ✅ Validar que la solicitud esté en estado 'Validado'
-                    if ($record->estado !== 'Validado') {
-                        Notification::make()
-                            ->title('No se puede asignar jurado')
-                            ->body('No se pudo asignar una comisión debido a que esta solicitud aún no ha sido revisada o validada.')
-                            ->danger()
-                            ->send();
-            
-                        return; 
-                    }
-            
-                    $existePlan = PlanPractica::where('solicitude_id', $record->id)->exists();
-            
-                    if ($existePlan) {
-                        $record->update([
-                            'estado' => 'Asignado',
-                        ]);
-                    }
-                     else {
-                        $comisionActiva = ComisionPermanente::where('estado', true)
-                            ->where('fecha_fin', '>', now())
-                            ->first();
-            
-                        if (!$comisionActiva) {
-                            Notification::make()
-                                ->title('Sin comisión activa')
-                                ->body('No hay comisión activa disponible para asignar.')
-                                ->danger()
-                                ->send();
-            
-                            return;
-                        }
-            
-                        PlanPractica::create([
-                            'solicitude_id' => $record->id,
-                            'comision_permanente_id' => $comisionActiva->id,
-                            'estado' => 'Pendiente',
-                        ]);
-            
-                        $record->update([
-                            'estado' => 'Asignado',
-                        ]);
-                    }
-            
-                    // ✅ Notificación de éxito (opcional)
-                    Notification::make()
-                        ->title('Jurado asignado correctamente')
-                        ->success()
-                        ->send();
-                })
-                ->visible(function () {
-                    $user = auth()->user();
-                    /** @var User $user */
-                    return !$user?->hasRole('Estudiante');
-                }), 
                 
             ])
             ->bulkActions([

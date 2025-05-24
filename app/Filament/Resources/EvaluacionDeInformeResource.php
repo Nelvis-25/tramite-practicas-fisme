@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\EvaluacionDeInformeResource\Pages;
 use App\Filament\Resources\EvaluacionDeInformeResource\RelationManagers;
+use App\Models\Docente;
 use App\Models\EvaluacionDeInforme;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -21,6 +22,27 @@ class EvaluacionDeInformeResource extends Resource
     protected static ?string $model = EvaluacionDeInforme::class;
     protected static ?string $navigationGroup = 'Informe de practicas';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    public static function getEloquentQuery(): Builder
+{
+    $query = parent::getEloquentQuery();
+
+    $user = auth()->user();
+
+    /** @var User $user */
+    if ($user && $user->hasRole('Jurado de informe')) {
+        $docente = Docente::where('user_id', $user->id)->first();
+
+        if ($docente) {
+            return $query->whereHas('jurados', function ($q) use ($docente) {
+                $q->where('docente_id', $docente->id);
+            });
+        }
+
+        return $query->whereRaw('0 = 1'); // Si no es docente, no retorna nada
+    }
+
+    return $query;
+}
 
     public static function form(Form $form): Form
     {
@@ -118,26 +140,26 @@ class EvaluacionDeInformeResource extends Resource
                   //      'style' => 'width: 250px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; word-wrap: break-word;',
                    // ]),
                Tables\Columns\TextColumn::make('observaciones')
-            ->label('Observaciones')
-            ->formatStateUsing(function ($record) {
-        $observaciones = $record->observaciones()->pluck('observacion')->toArray();
+                    ->label('Observaciones')
+                    ->formatStateUsing(function ($record) {
+                $observaciones = $record->observaciones()->pluck('observacion')->toArray();
 
-        if (count($observaciones) === 0) {
-            return 'Sin observaciones';
-        }
+                if (count($observaciones) === 0) {
+                    return 'Sin observaciones';
+                }
 
-                return implode('<br>', array_map(fn($obs) => '<span style="margin-right:8px;">-</span>' . e($obs), $observaciones));
-            })
-            ->html()
-            ->extraAttributes([
-                'style' => 'width: 350px; white-space: normal; line-height: 1.5; font-family: inherit; font-size: inherit; color: inherit;',
-            ])
-            ->searchable(
-        query: function (Builder $query, string $search) {
-            $query->whereHas('observaciones', function (Builder $subQuery) use ($search) {
-                $subQuery->where('observacion', 'like', "%{$search}%");
-            });
-        }),
+                        return implode('<br>', array_map(fn($obs) => '<span style="margin-right:8px;">-</span>' . e($obs), $observaciones));
+                    })
+                    ->html()
+                    ->extraAttributes([
+                        'style' => 'width: 320px; white-space: normal; line-height: 1.5; font-family: inherit; font-size: inherit; color: inherit;',
+                    ])
+                    ->searchable(
+                query: function (Builder $query, string $search) {
+                    $query->whereHas('observaciones', function (Builder $subQuery) use ($search) {
+                        $subQuery->where('observacion', 'like', "%{$search}%");
+                    });
+                }),
                 Tables\Columns\TextColumn::make('estado')
                     ->label('Calificación')
                     ->searchable()
@@ -217,6 +239,8 @@ class EvaluacionDeInformeResource extends Resource
                         if ($decision === 'Aprobado') {
                             $record->update([
                                 'estado' => 'Aprobado',
+                                'activo' => true,
+                                
                             ]);
 
                             Notification::make()
@@ -228,6 +252,7 @@ class EvaluacionDeInformeResource extends Resource
                         if ($decision === 'Observado') {
                             $record->update([
                                 'estado' => 'Observado',
+                                'activo' => false,
                             ]);
                             $record->observaciones()->create([
                                 'observacion' => $data['observacion'],
@@ -242,6 +267,7 @@ class EvaluacionDeInformeResource extends Resource
                         if ($decision === 'Desaprobado') {
                             $record->update([
                                 'estado' => 'Desaprobado',
+                                'activo' => true,
                             ]);
                             $record->observaciones()->create([
                                 'observacion' => $data['observacion'],

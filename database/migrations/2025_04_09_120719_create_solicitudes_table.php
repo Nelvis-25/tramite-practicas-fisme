@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('informe')->nullable();
             $table->string('carta_presentacion')->nullable();
             $table->string('comprobante_pago')->nullable();
-            $table->enum('estado', ['Pendiente', 'Validado', 'Rechazado','Asignado']);
+            $table->enum('estado', ['Pendiente', 'Aceptado', 'Rechazado','Comisión asignada']);
             $table->timestamps();
         });
     }

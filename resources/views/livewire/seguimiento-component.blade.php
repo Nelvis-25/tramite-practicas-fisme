@@ -3,7 +3,7 @@
   @vite('resources/css/app.css')
   <div class="max-w-6xl mx-auto p-8 rounded-3xl shadow-2xl bg-white dark:bg-gray-800 transition duration-300 border border-gray-200 dark:border-gray-700">
     
-    <h2 class="text-4xl font-extrabold mb-4 text-center text-gray-800 dark:text-white relative">
+    <h2 class="text-3xl font-extrabold mb-4 text-center text-gray-800 dark:text-white relative">
       <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-500 dark:from-blue-400 dark:to-purple-300">
         @if($nombreSolicitud)
           {{ $nombreSolicitud }}
@@ -24,7 +24,7 @@
         <div class="flex items-center justify-start relative">
           <div class="w-1/2 pr-10 text-right transform transition duration-500 hover:scale-105 opacity-{{ empty($fechaCreacion) ? '50' : '100' }}">
               <div class="bg-blue-50 dark:bg-gray-800 p-4 rounded-xl shadow-md border-l-4 border-blue-500 dark:border-blue-400 inline-block">
-                  <h3 class="text-xl font-bold {{ empty($fechaCreacion) ? 'text-gray-500 dark:text-gray-200' : 'text-blue-600 dark:text-blue-300' }} mb-2">
+                  <h3 class="text-xl font-bold {{ empty($fechaCreacion) ? 'text-gray-500 dark:text-gray-200' : 'text-blue-600 dark:text-blue-300' }} mb-2 text-base">
                       1. Solicitd de plan de práctica:
                   </h3>
       
@@ -36,7 +36,7 @@
                           </span>
                       </div>
                   @else
-                      <p class="text-gray-600 dark:text-gray-200">
+                      <p class="text-gray-600 dark:text-gray-200 text-sm">
                           Tu solicitud fue enviada correctamente el: 
                           <span class="font-bold">{{ $fechaCreacion }}</span>.
                       </p>
@@ -62,11 +62,11 @@
         <div class="flex items-center justify-end relative">
           <!-- Círculo indicador -->
           <div class="relative z-20 flex items-center justify-center w-10 h-10
-              {{ in_array($estadoSolicitud, ['Validado', 'Rechazado', 'Asignado']) 
+              {{ in_array($estadoSolicitud, ['Aceptado', 'Rechazado', 'Comisión asignada']) 
                   ? 'bg-green-500 dark:bg-green-600' 
                   : 'bg-gray-300 dark:bg-gray-500' }} 
               rounded-full border-4 border-white dark:border-gray-800 shadow-lg transform translate-x-5 transition duration-500 hover:scale-110">
-            @if (in_array($estadoSolicitud, ['Validado', 'Rechazado', 'Asignado']))
+            @if (in_array($estadoSolicitud, ['Aceptado', 'Rechazado', 'Comisión asignada']))
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
@@ -79,30 +79,41 @@
 
           <!-- Tarjeta de contenido -->
           <div class="w-1/2 pl-10 text-left transform transition duration-500 hover:scale-105 opacity-{{ empty($estadoSolicitud) ? '50' : '100' }}">
-            <div class="{{ in_array($estadoSolicitud, ['Validado', 'Asignado']) 
+            <div class="{{ in_array($estadoSolicitud, ['Aceptado', 'Comisión asignada']) 
                         ? 'bg-green-50 dark:bg-gray-800 p-4 rounded-xl shadow-md border-r-4 border-green-500 dark:border-green-400' 
                         : ($estadoSolicitud === 'Rechazado' 
                             ? 'bg-red-50 dark:bg-gray-800 p-4 rounded-xl shadow-md border-r-4 border-red-500 dark:border-red-400' 
                             : 'bg-gray-100 dark:bg-gray-700 p-4 rounded-xl shadow-md border-r-4 border-gray-400 dark:border-gray-500') }}">
               
               <!-- Título -->
-              <h3 class="text-xl font-bold mb-2 
-                        {{ in_array($estadoSolicitud, ['Validado', 'Asignado']) 
+              <h3 class="text-base font-bold mb-2 
+                        {{ in_array($estadoSolicitud, ['Aceptado', 'Comisión asignada']) 
                             ? 'text-green-600 dark:text-green-300' 
                             : ($estadoSolicitud === 'Rechazado' 
                                 ? 'text-red-600 dark:text-red-300' 
                                 : 'text-gray-500 dark:text-gray-400') }}">
-                {{ in_array($estadoSolicitud, ['Validado', 'Asignado']) 
-                    ? '2. Solicitud Evaluada' 
+                {{ in_array($estadoSolicitud, ['Aceptado', 'Comisión asignada']) 
+                    ? '2. Solicitud Aceptada' 
                     : ($estadoSolicitud === 'Rechazado' 
                         ? '2. Solicitud Rechazada' 
                         : '2. Solicitud en Revisión') }}
               </h3>
 
               <!-- Descripción -->
-              @if(in_array($estadoSolicitud, ['Validado', 'Rechazado', 'Asignado']))
-                <p class="text-gray-600 dark:text-gray-200">
-                  Su solicitud ha sido <span class="font-bold lowercase">{{ $estadoSolicitud === 'Asignado' ? 'validado' : strtolower($estadoSolicitud) }}</span>{{ $estadoSolicitud !== 'Rechazado' ? ' con éxito.' : ' Revise el motivo en la sección de observaciones que tiene en su solicitud.' }}
+              @if(in_array($estadoSolicitud, ['Aceptado', 'Rechazado', 'Comisión asignada']))
+                <p class="text-gray-600 dark:text-gray-200 text-sm">
+                 
+                  Su solicitud ha sido 
+                  <span class="font-bold lowercase">
+                    {{ $estadoSolicitud === 'Comisión asignada' ? 'Aceptado' : strtolower($estadoSolicitud) }}
+                  </span>
+                  @if($estadoSolicitud !== 'Rechazado')
+                    con éxito.
+                  @else
+                    , debido a que:<br>
+                    – {{ $observacioneSolicitud }}
+                  @endif
+
                 </p>
               @else
                 <div class="mt-2 flex justify-start">
@@ -117,16 +128,16 @@
               @endif
 
               <!-- Badge de estado (solo cuando hay datos) -->
-              @if(in_array($estadoSolicitud, ['Validado', 'Rechazado', 'Asignado']))
-                <div class="mt-2 flex justify-start">
+              @if(in_array($estadoSolicitud, ['Aceptado', 'Rechazado', 'Comisión asignada']))
+                <div class="mt-2 flex justify-start ">
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                            {{ in_array($estadoSolicitud, ['Validado', 'Asignado']) 
+                            {{ in_array($estadoSolicitud, ['Aceptado', 'Comisión asignada']) 
                                 ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' 
                                 : ($estadoSolicitud === 'Rechazado' 
                                     ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200' 
                                     : 'bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-300') }}">
                     <svg class="mr-1 h-2 w-2 
-                              {{ in_array($estadoSolicitud, ['Validado', 'Asignado']) 
+                              {{ in_array($estadoSolicitud, ['Aceptado', 'Comisión asignada']) 
                                   ? 'text-green-500 dark:text-green-300' 
                                   : ($estadoSolicitud === 'Rechazado' 
                                       ? 'text-red-500 dark:text-red-300' 
@@ -147,7 +158,7 @@
             <div class="w-1/2 pr-10 text-right transform transition duration-500 hover:scale-105 opacity-{{ empty($jurados) ? '50' : '100' }}">
                 <div class="bg-blue-50 dark:bg-gray-800 p-4 rounded-xl shadow-md border-l-4 border-blue-500 dark:border-blue-400 inline-block">
                     
-                    <h3 class="text-xl font-bold mb-2 {{ empty($jurados) ? 'text-gray-500 dark:text-gray-400' : 'text-blue-600 dark:text-blue-400' }}">
+                    <h3 class="text-xl font-bold mb-2 {{ empty($jurados) ? 'text-gray-500 dark:text-gray-400' : 'text-blue-600 dark:text-blue-400 text-base' }}">
                         3. Comisión permanente asignado(a):
                     </h3>
 
@@ -162,7 +173,7 @@
                       </span>
                     </div>
                     @else
-                        <ul class="text-gray-700 dark:text-gray-100 list-none ml-4">
+                        <ul class="text-gray-700 dark:text-gray-100 list-none ml-4 text-sm">
                             @foreach($jurados as $jurado)
                                 <li>
                                     <strong class="text-gray-900 dark:text-white">{{ $jurado['cargo'] }}:</strong>
@@ -216,22 +227,49 @@
                         ? 'bg-green-50 dark:bg-gray-800 p-4 rounded-xl shadow-md border-r-4 border-green-500 dark:border-green-400' 
                         : 'bg-gray-100 dark:bg-gray-700 p-4 rounded-xl shadow-md border-r-4 border-gray-400 dark:border-gray-500' }}">
         
-              <h3 class="text-xl font-bold mb-2 {{ $observaciones ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400' }}">
+              <h3 class="text-base font-bold mb-2 {{ $observaciones ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400' }}">
                 4. Fecha de sustentación
               </h3>
         
               @if($observaciones === 'Por sustentar')
-                <p class="text-gray-700 dark:text-gray-200 mb-3">
+                <p class="text-gray-700 dark:text-gray-200 mb-3 text-sm">
                   La sustentación está programada para el <strong>{{ $fechaSustentacion }}</strong> en la sala de reuniones de la FISME. El practicante debe presentar diapositivas para exponer su plan de prácticas.
                 </p>
         
               @elseif($observaciones === 'Sustentado')
-                <p class="text-gray-700 dark:text-gray-200 mb-3">
-                   Usted a <strong>{{ strtolower($observaciones) }}</strong> su plan de prácticas el <strong>{{ $fechaSustentacion }}</strong> y fue <strong>{{ $estadoPlan }}</strong> por la comsión permanente.
+                <p class="text-gray-700 dark:text-gray-200 mb-3 text-sm" style="text-align: justify;">
+                  Usted ha <strong>{{ strtolower($observaciones) }}</strong> su plan de prácticas el <strong>{{ $fechaSustentacion }}</strong>
+                  @if($estadoPlan === 'Observado')
+                    y tiene observaciones por corregir.
+                  @else
+                    y fue <strong>{{ $estadoPlan }}</strong> por la comisión permanente.
+                  @endif
                 </p>
-        
+
+                @if($estadoPlan === 'Observado' && !empty($evaluacionesConObservaciones))
+                  <div class="mt-3 pl-4 border-l-4 border-success-500 dark:border-success-400 bg-green-100 dark:bg-gray-800 rounded-r-lg p-3">
+                    <h4 class="font-bold text-yellow-600 dark:text-yellow-400 mb-2 text-sm">Observaciones de la comisión:</h4>
+                    
+                    @foreach($evaluacionesConObservaciones as $evaluacion)
+                      <div class="mb-3">
+                        @if(count($evaluacionesConObservaciones) > 1)
+                          <h5 class="font-medium text-gray-700 dark:text-gray-300 text-sm">Evaluación {{ $evaluacion['numero'] }}:</h5>
+                        @endif
+                        <ul class="list-disc ml-5 space-y-1 text-sm">
+                          @foreach($evaluacion['observaciones'] as $obs)
+                            <li class="text-gray-700 dark:text-gray-300">{{ $obs }}</li>
+                          @endforeach
+                        </ul>
+                      </div>
+                    @endforeach
+
+                    <p class="text-xs   mt-2" style="text-align: justify;">
+                      Por favor, realice las correcciones indicadas y vuelva a enviar su plan de prácticas.
+                    </p>
+                  </div>
+                @endif
               @elseif($observaciones)
-                <p class="text-gray-700 dark:text-gray-200 mb-3">
+                <p class="text-gray-700 dark:text-gray-200 mb-3 text-sm" >
                  Estimado practicante para comunicarlo que la sustentación fue <strong>{{ $observaciones }}</strong>
                 </p>
         
