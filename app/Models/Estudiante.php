@@ -40,10 +40,10 @@ class Estudiante extends Model
     return $query->where('user_id', $userId);
 }
 
-public function solicitude(): HasOne
-{
-    return $this->hasOne(Solicitude::class);
-}
+    public function solicitude(): HasMany
+        {
+            return $this->hasMany(Solicitude::class);
+        }
     
     public function user(): BelongsTo
     {

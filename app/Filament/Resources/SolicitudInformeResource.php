@@ -327,6 +327,7 @@ class SolicitudInformeResource extends Resource
                                     'informe_de_practica_id' => $informe->id,
                                     'jurado_de_informe_id' => $juradoCreado->id,
                                     'estado' => 'Pendiente',
+                                    'ronda' => 1,
                                     'observacion' => null,
                                     'activo' => false,
 ]);

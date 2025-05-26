@@ -135,10 +135,7 @@ class PlanPracticaResource extends Resource
                    ->searchable()
                     ->dateTime()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('estado')
-                    ->label('Estado') 
-                    ->searchable()
-                    ->sortable(),
+                
                 Tables\Columns\TextColumn::make('observaciones')
                     ->label('Sustentación')
                     ->wrap()
@@ -157,6 +154,19 @@ class PlanPracticaResource extends Resource
                     ->extraAttributes([
                         'style' => 'width: 150px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; word-wrap: break-word;',
                     ]),
+                Tables\Columns\TextColumn::make('estado')
+                    ->label('Estado') 
+                    ->searchable()
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'Pendiente' => 'warning',             
+                        'Observado' => 'success',              
+                        'Desaprobado' => 'danger',            
+                        'Aprobado' => 'primary',     
+                        default => 'gray',                   
+                    })
+                    ->formatStateUsing(fn ($state) => $state),
+                
 
                    // Tables\Columns\TextColumn::make('estado')
                     //->label('Evaluación') 

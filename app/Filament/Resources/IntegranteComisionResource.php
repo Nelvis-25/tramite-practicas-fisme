@@ -25,42 +25,48 @@ class IntegranteComisionResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
     
 
-    public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Forms\Components\Select::make('comision_permanente_id')
-                    ->label('Comisión Permanente')
-                    ->relationship('comisionPermanente', 'nombre')
-                    ->required()
-                    ->searchable()
-                    ->preload(),
-    
-                Repeater::make('integrantes')
-                    ->label('Seleccione los integrantes y cargos de la comisión')
-                    ->schema([
-                        Forms\Components\Select::make('docente_id')
-                            ->label('Docente')
-                            ->relationship('docente', 'nombre')
-                            ->required()
-                            ->searchable()
-                            ->preload(),
-    
-                        Forms\Components\Select::make('cargo')
-                            ->required()
-                            ->options([
-                                'Secretario' => 'Secretario',
-                                'Presidente' => 'Presidente',
-                                'Vocal' => 'Vocal',
-                                'Accesitario' => 'Accesitario',
-                            ]),
-                    ])
-                    ->minItems(1)
-                    ->defaultItems(1)
-                    ->columns(2)
-                    ->required(),
-            ]);
-    }
+public static function form(Form $form): Form
+{
+    return $form
+        ->schema([
+            Forms\Components\Select::make('comision_permanente_id')
+                ->label('Comisión Permanente')
+                ->relationship('comisionPermanente', 'nombre')
+                ->required()
+                ->searchable()
+                ->preload()
+                ->columnSpanFull()
+                ,  // <-- hacemos que ocupe solo una parte
+
+            Repeater::make('integrantes')
+                ->label('Seleccione los integrantes y cargos de la comisión')
+                ->schema([
+                    Forms\Components\Select::make('docente_id')
+                        ->label('Docente')
+                        ->relationship('docente', 'nombre')
+                        ->required()
+                        ->searchable()
+                        ->preload(),
+
+                    Forms\Components\Select::make('cargo')
+                        ->required()
+                        ->options([
+                            'Secretario' => 'Secretario',
+                            'Presidente' => 'Presidente',
+                            'Vocal' => 'Vocal',
+                            'Accesitario' => 'Accesitario',
+                        ]),
+                ])
+                ->minItems(1)
+                ->defaultItems(1)
+                ->maxItems(4)
+                ->columns(2)
+                ->columnSpanFull()  
+                ->required(),
+        ])
+        ->columns(2); 
+}
+
     
     public static function table(Table $table): Table
     {

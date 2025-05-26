@@ -17,7 +17,9 @@ return new class extends Migration
             $table->foreignId('jurado_de_informe_id')->constrained('jurado_de_informes')->onDelete('cascade');
             $table->date('fecha_evaluacion')->nullable();
             $table->string('observacion', 900)->nullable(); 
-            $table->enum('estado', ['Pendiente', 'Aprobado', 'Desaprobado', 'Observado']);
+            $table->tinyInteger('ronda')->nullable(); 
+            $table->decimal('nota', 5, 2)->nullable();
+            $table->enum('estado', ['Pendiente', 'Aprobado', 'Desaprobado', 'Observado','Evaluado']);
             $table->boolean('activo')->default(true);
             $table->timestamps();
         });

@@ -45,16 +45,20 @@ class EvaluacionDeInformeResource extends Resource
 }
 
     public static function form(Form $form): Form
-    {
-        return $form
+{
+    return $form
+    ->extraAttributes(['class' => 'p-6 bg-white shadow rounded border'])
+    ->schema([
+        Forms\Components\Grid::make(13)
             ->schema([
+                
                 Forms\Components\Select::make('informe_de_practica_id')
-                    ->label('Informe de practica')
-                   ->options(function () {
+                    ->label('Informe de práctica')
+                    ->options(function () {
                         return \App\Models\InformeDePractica::with('solicitudInforme.practica.solicitude')
                             ->get()
                             ->mapWithKeys(function ($informe) {
-                                 $nombre = optional($informe->solicitudInforme->practica->solicitude)->nombre;
+                                $nombre = optional($informe->solicitudInforme->practica->solicitude)->nombre;
                                 return [$informe->id => $nombre ?? 'Sin nombre'];
                             });
                     })
@@ -62,51 +66,116 @@ class EvaluacionDeInformeResource extends Resource
                     ->searchable()
                     ->required()
                     ->preload()
-                    ,
-                 Forms\Components\Select::make('jurado_de_informe_id')
-                    ->label('Jurado de informe')
-                    ->options(function () {
-                        return \App\Models\JuradoDeInforme::with('docente')
-                            ->get()
-                            ->mapWithKeys(function ($jurado) {
-                                $nombre = optional($jurado->docente)->nombre;
-                                return [$jurado->id => $nombre ?? 'Sin nombre'];
-                            });
-                    })
-                    ->searchable()
-                    ->required()
-                    ->preload()
-                    ,
-                Forms\Components\Radio::make('estado')
-                ->label('Evaluación') 
-                ->options([
-                    'Aprobado' => 'Aprobado',
-                    'Desaprobado' => 'Desaprobado',
-                    'Observado' => 'Observado',
-                ])
-                ->columns(3) // Esto pone los botones en horizontal
-                ->reactive()
-                ->afterStateUpdated(function (Set $set, Get $get, $state) {
-                    $set('activo', $state !== 'Observado');
-                })
-                ->required(),
-                 Forms\Components\Textarea::make('observacion')
-                ->label('Observación')
-                ->maxLength(900)
-                ->rows(4)
-                ->required(fn (Get $get) => in_array($get('estado'), ['Desaprobado', 'Observado']))
-                ->visible(fn (Get $get) => in_array($get('estado'), ['Desaprobado', 'Observado'])),
-            
-            Forms\Components\Toggle::make('activo')
-                ->label('Estado')
-                ->reactive()
-                ->required(),
-            ]);
-    }
+                    ->columnSpan([
+                        'default' => 11, // móvil
+                        'md' => 7,       // escritorio
+                    ]),
 
+                Forms\Components\Placeholder::make('') // espacio vacío
+                    ->columnSpan([
+                        'default' => 0, // en móvil no hace falta espacio vacío
+                        'md' => 1,
+                    ]),
+
+                Forms\Components\Select::make('ronda')
+                    ->label('N° de evaluación ')
+                    ->options([
+                        1 => 'Primera evaluación',
+                        2 => 'Segunda evaluación',
+                    ])
+                    ->default(2)
+                    //->disabled()
+                    ->required()
+                    ->columnSpan([
+                        'default' => 3,
+                        'md' => 3,
+                    ]),
+
+                // Bloque específico: Jurado (7) + espacio (1) + Nota (4)
+                    Forms\Components\Select::make('jurado_de_informe_id')
+                        ->label('Jurado de informe')
+                        ->options(function (callable $get) {
+                            $informeId = $get('informe_de_practica_id');
+
+                            if (!$informeId) {
+                                return [];
+                            }
+
+                            $informe = \App\Models\InformeDePractica::with('jurados.docente')
+                                ->find($informeId);
+
+                            if (!$informe || !$informe->jurados) {
+                                return [];
+                            }
+
+                            $user = auth()->user();
+                            $docente = \App\Models\Docente::where('user_id', $user->id)->first();
+
+                            $juradosInforme = $informe->jurados;
+
+                            // Si el docente actual es jurado, mostrar solo él
+                            if ($docente) {
+                                $juradoDelDocente = $juradosInforme->firstWhere('docente_id', $docente->id);
+                                if ($juradoDelDocente) {
+                                    $nombre = optional($juradoDelDocente->docente)->nombre ?? 'Sin nombre';
+                                    $cargo = $juradoDelDocente->cargo;
+                                    return [$juradoDelDocente->id => "{$nombre} - {$cargo}"];
+                                }
+                            }
+
+                            // Si no es jurado, mostrar todos
+                            return $juradosInforme->mapWithKeys(function ($jurado) {
+                                $nombre = optional($jurado->docente)->nombre ?? 'Sin nombre';
+                                
+                                $cargo = $jurado->cargo;
+                                return [$jurado->id => "{$nombre} - {$cargo}"];
+                            });
+                        })
+                        ->searchable()
+                        ->required()
+                        ->preload()
+                        ->columnSpan([
+                            'default' => 11,
+                            'md' => 7,
+                        ]),
+
+
+                Forms\Components\Placeholder::make('') 
+                    ->columnSpan([
+                        'default' => 0,
+                        'md' => 1,
+                    ]),
+
+                Forms\Components\TextInput::make('nota')
+                    ->label('Nota')
+                    ->numeric()
+                    ->step(0.01)
+                    ->minValue(0)
+                    ->maxValue(20)
+                    ->nullable()
+                    ->required()
+                    ->columnSpan([
+                        'default' => 2,
+                        'md' => 2,
+                    ]),
+               
+                Forms\Components\Toggle::make('activo')
+                    ->label('Estado')
+                    ->reactive()
+                    ->default(true)
+                    ->required()
+                    ->disabled()
+                    ->columnSpan([
+                        'default' => 13,
+                        'md' => 4,
+                    ]),
+            ]),
+    ]);
+}
     public static function table(Table $table): Table
     {
         return $table
+        
             ->columns([
                 //Tables\Columns\TextColumn::make('informeDePractica.solicitudInforme.practica.solicitude.nombre')
                   //  ->label('Informe de practica')
@@ -116,11 +185,11 @@ class EvaluacionDeInformeResource extends Resource
                    // 'style' => 'width: 400px; word-wrap: break-word; white-space: normal;text-align: justify;',
                    // ]),
                 Tables\Columns\TextColumn::make('informeDePractica.solicitudInforme.estudiante.nombre')
-                    ->label('Nombre del practicante')
+                    ->label('Nombre del Practicante')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('informeDePractica.solicitudInforme.informe')
-                    ->label('Informe de practica') 
+                    ->label('Informe de Práctica') 
                     ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')
                     ->url(fn ($record) => $record->informeDePractica->solicitudInforme->informe ? asset('storage/'.str_replace('storage/', '', $record->informeDePractica->solicitudInforme->informe)) : null)
                     ->openUrlInNewTab()
@@ -130,7 +199,7 @@ class EvaluacionDeInformeResource extends Resource
                         'style' => 'width: 200px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;',
                     ]), 
                 Tables\Columns\TextColumn::make('jurados.docente.nombre')
-                    ->label('Jurado de informe')
+                    ->label('Jurado de Informe')
                     ->formatStateUsing(fn ($state, $record) => $state . ' - ' . $record->jurados->cargo)
                     ->searchable()
                     ->sortable(),
@@ -139,150 +208,114 @@ class EvaluacionDeInformeResource extends Resource
                    // ->extraAttributes([
                   //      'style' => 'width: 250px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; word-wrap: break-word;',
                    // ]),
-               Tables\Columns\TextColumn::make('observaciones')
-                    ->label('Observaciones')
-                    ->formatStateUsing(function ($record) {
-                $observaciones = $record->observaciones()->pluck('observacion')->toArray();
-
-                if (count($observaciones) === 0) {
-                    return 'Sin observaciones';
-                }
-
-                        return implode('<br>', array_map(fn($obs) => '<span style="margin-right:8px;">-</span>' . e($obs), $observaciones));
-                    })
-                    ->html()
-                    ->extraAttributes([
-                        'style' => 'width: 320px; white-space: normal; line-height: 1.5; font-family: inherit; font-size: inherit; color: inherit;',
-                    ])
-                    ->searchable(
-                query: function (Builder $query, string $search) {
-                    $query->whereHas('observaciones', function (Builder $subQuery) use ($search) {
-                        $subQuery->where('observacion', 'like', "%{$search}%");
-                    });
-                }),
-                Tables\Columns\TextColumn::make('estado')
-                    ->label('Calificación')
+                Tables\Columns\TextColumn::make('nota')
+                    ->label('Nota')
                     ->searchable()
-                     ->color(fn ($state) => $state === 'Desaprobado' ? 'danger' : null),
-                Tables\Columns\IconColumn::make('activo')
+                    ->color(function ($record) {
+                            return $record->nota < 12 ? 'danger' : 'primary';
+                        }),
+                Tables\Columns\TextColumn::make('estado')
                     ->label('Estado')
-                    ->boolean()
-                    ->color(fn (bool $state) => $state ? 'primary' : 'gray')
-                    ->tooltip(function ($record) {
-                        return match($record->estado) {
-                            'Aprobado', 'Desaprobado' => 'Evaluado',
-                            'Observado' => 'En evaluación',
-                            'Pendiente' => 'Por evaluar',
-                            default => 'Sin estado',
-                        };
+                    ->searchable()
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'evaluacion', 'Evaluado' => 'primary',   // azul
+                        'pendiente', 'Pendiente' => 'warning',                // amarillo
+                        default => 'gray',                       // gris por defecto
                     })
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'evaluacion', 'Evaluado' => 'Evaluado',
+                        'pendiente', 'Pendiente' => 'Pendiente',
+                        default => ucfirst($state),
+                    }),
+              
+               Tables\Columns\TextColumn::make('ronda')
+                    ->label('Ronda')
+                    ->searchable()
+                    ->sortable()
+                    ->formatStateUsing(fn ($state) => $state == 1 ? 'Primera Evaluación' : ($state == 2 ? 'Segunda Evaluación' : ''))
+                    ->toggleable(isToggledHiddenByDefault: true), 
+               Tables\Columns\TextColumn::make('promedio_ronda')
+                ->label('Promedio ')
+                ->getStateUsing(function ($record) {
+                    $plan = $record->informeDePractica;
+                    $rondaActual = $record->ronda;
+                    $evaluaciones = $plan->evaluaciones()
+                        ->where('ronda', $rondaActual)
+                        ->where('estado', 'Evaluado')
+                        ->get();
+
+                    if ($evaluaciones->count() < 3) {
+                        return '-'; 
+                    }
+
+                    // Calcular el promedio redondeado de las notas en esa ronda
+                    return round($evaluaciones->avg('nota'));
+                })
+                ->toggleable(isToggledHiddenByDefault: true),  
+               Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Fecha de Evaluación')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\IconColumn::make('activo')
+                    ->label('')
+                    ->trueColor('primary')  
+                    ->falseColor('gray')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                
             ])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\Action::make('evaluar')
+               Tables\Actions\Action::make('evaluar')
                 ->label('Evaluar')
                 ->icon('heroicon-o-document-check')
-                    ->modalHeading('EVALUAR INFORME DE PRÁCTICA')
-                    ->requiresConfirmation()
-                     ->visible(fn ($record) => $record->estado !== 'Aprobado')
-                    ->modalIcon('heroicon-o-document-magnifying-glass')
-                    ->modalWidth('md')
-                ->form([
-                        Forms\Components\Radio::make('estado')
-                            ->label('Resultado de la Evaluación')
-                            ->options([
-                                'Aprobado' => 'Aprobado', 
-                                'Observado' => 'Observado',
-                                'Desaprobado' => 'Desaprobado',
-                            ])
-                            ->required()
-                            ->reactive()
-                            ->columnSpanFull()
-                            ->extraAttributes([
-                                'class' => 'font-bold flex justify-center gap-4 border border-gray-300 rounded-lg p-4 mt-2',
-                            ])
+                ->modalHeading(fn ($record) => 'EVALUANDO INFORME DE PRÁCTICA DE ' . strtoupper($record->informeDePractica->solicitudInforme->estudiante->nombre))
+                ->requiresConfirmation()
+                //->visible(fn ($record) => $record->estado !== 'Evaluado')
+                ->modalIcon('heroicon-o-document-magnifying-glass')
+                ->modalWidth('md')
+                    ->form([
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('nota')
+                                    ->label('Nota')
+                                    ->numeric()
+                                    ->step(0.01)
+                                    ->minValue(0)
+                                    ->maxValue(20)
+                                    ->nullable()
+                                    ->required(),
 
-                            ->afterStateUpdated(function (callable $set, $state) {
-                                if ($state === 'Aprobado') {
-                                    $set('observacion', null);
-                                }
-                            })
-                            ,
-            
-                    Forms\Components\Textarea::make('observacion')
-                    ->label('Observaciones')
-                    ->columnSpanFull()
-                    ->maxLength(500)
-                    ->placeholder('Escribe tus observaciones aquí...')
-                    ->rows(5)
-                    ->disabled(fn ($get) => $get('estado') === 'Aprobado')
-                    ->visible(fn ($get) => in_array($get('estado'), ['Observado', 'Desaprobado']))
-                    ->required(fn ($get) => in_array($get('estado'), ['Desaprobado', 'Observado']))
-                    ->reactive()
-                    ->columnSpanFull()
-                    ->extraInputAttributes(['class' => 'mt-4']),
-                ])
-                        ->action(function (EvaluacionDeInforme $record, array $data) {
-                        $decision = $data['estado'];
+                                Forms\Components\TextInput::make('estado_visual')
+                                    ->label('Estado')
+                                    ->default('Evaluado')
+                                    ->disabled(), 
+                                Forms\Components\Hidden::make('estado')
+                                    ->default('Evaluado'), 
+                            ]),
+                    ])
+                    ->action(function (EvaluacionDeInforme $record, array $data) {
+                        $record->update([
+                            'nota'   => $data['nota'],       
+                            'estado' => $data['estado'],      
+                            'activo' => true,               
+                        ]);
 
-                        if ($decision === 'Aprobado') {
-                            $record->update([
-                                'estado' => 'Aprobado',
-                                'activo' => true,
-                                
-                            ]);
-
-                            Notification::make()
-                                ->title('Evaluacion registrada con exito')
-                                ->info()
-                                ->send();
-                        }
-
-                        if ($decision === 'Observado') {
-                            $record->update([
-                                'estado' => 'Observado',
-                                'activo' => false,
-                            ]);
-                            $record->observaciones()->create([
-                                'observacion' => $data['observacion'],
-                              
-                            ]);
-
-                            Notification::make()
-                                ->title('Evaluacion registrada con exito')
-                                ->info()
-                                ->send();
-                        }
-                        if ($decision === 'Desaprobado') {
-                            $record->update([
-                                'estado' => 'Desaprobado',
-                                'activo' => true,
-                            ]);
-                            $record->observaciones()->create([
-                                'observacion' => $data['observacion'],
-                             
-                            ]);
-
-                            Notification::make()
-                                ->title('Evaluacion registrada con exito')
-                                ->info()
-                                ->send();
-                        }
+                        Notification::make()
+                            ->title('Evaluación registrada con éxito')
+                            ->info()
+                            ->send();
                     })
-                    
-                    ->modalSubmitActionLabel('Guardar')
-                    ->modalCancelActionLabel('Cancelar'),
+                ->modalSubmitActionLabel('Guardar')
+                ->modalCancelActionLabel('Cancelar'),
+
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])

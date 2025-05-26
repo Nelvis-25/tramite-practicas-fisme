@@ -13,6 +13,7 @@ use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\View\TablesRenderHook;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
@@ -55,18 +56,25 @@ public static function canCreate(): bool
         $user = Auth::user();
         /** @var \App\Models\User $user */
         return $form
+           //->extraAttributes(['class' => 'p-6 bg-white shadow rounded border'])
             ->schema([
                 Forms\Components\TextInput::make('nombre')
+                    ->label('Nombre del estudiante')
                     ->required()
                     ->maxLength(100),
                 Forms\Components\TextInput::make('dni')
-                    ->required()
-                    ->maxLength(8),
+                    ->label('DNI')
+                    ->minLength(8)
+                    ->unique(ignoreRecord: true)
+                    ->maxLength(8)
+                    ->numeric(),
                 Forms\Components\TextInput::make('codigo')
+                    ->label('Codigo del estudiante')
                     ->required()
+                    ->unique(ignoreRecord: true)
                     ->maxLength(10),
                 Forms\Components\Select::make('tipo_estudiante')
-                ->label('Tipo de Estudiante')
+                ->label('Tipo de estudiante')
                 ->options([
                     'Estudiante' => 'Estudiante',
                     'Egresado' => 'Egresado', 
@@ -75,11 +83,13 @@ public static function canCreate(): bool
                     ->reactive() 
                     ,
                     Forms\Components\TextInput::make('telefono')
+                    ->label('Teléfono')
                     ->tel()
-                    ->required()
-                    ->maxLength(9),
+                    ->minLength(9)
+                    ->maxLength(9)
+                    ->numeric(),
                 Forms\Components\Select::make('ciclo')
-                   
+                   ->label('Ciclo de estudios')
                     ->options([
                         'VII' => 'Ciclo VII',
                         'VIII' => 'Ciclo VIII', 
@@ -90,9 +100,11 @@ public static function canCreate(): bool
                   ,
                                     
                 Forms\Components\TextInput::make('facultad')
+                    ->label('Facultad')
                     ->required()
                     ->maxLength(250),
                 Forms\Components\Select::make('carrera')
+                    ->label('Carrera profesional')
                     ->required()
                     ->options([
                         'Ingeniería de Sistemas' => 'Ingeniería de Sistemas',
@@ -102,7 +114,9 @@ public static function canCreate(): bool
                     ]),
                
                     Forms\Components\TextInput::make('email')
+                    ->label('Gmail')
                     ->email()
+                    ->unique(ignoreRecord: true)
                     ->required()
                     ->maxLength(125)
                     ->disabled()
@@ -121,6 +135,7 @@ public static function canCreate(): bool
                     ->relationship('user', 'name')
                     ->required()
                     ->searchable()
+                    ->unique(ignoreRecord: true)
                     ->preload()
                     ->default(fn () => $user?->hasRole('Estudiante') ? $user->id : null)
                     ->disabled(fn () => $user?->hasRole('Estudiante'))
@@ -138,45 +153,81 @@ public static function canCreate(): bool
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nombre')
+                    ->label('Nombre')  
                     ->searchable(),
                 Tables\Columns\TextColumn::make('dni')
+                    ->label('DNI')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('codigo')
+                    ->label('Código')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('tipo_estudiante')
+                    ->label('Tipo de estudiante')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('ciclo')
+                    ->label('Ciclo')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('facultad')
+                    ->label('Facultad')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('carrera')
+                    ->label('Carrera profesional')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('telefono')
-                    ->searchable(),
+                    ->label('N° teléfono')
+                    ->searchable()
+                    ,
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
                 Tables\Columns\IconColumn::make('estado')
-                    ->boolean(),
+                    ->label('Estado')
+                     ->boolean()
+                    ->colors([
+                        'primary' => true,  
+                        'gray' => false,    
+                    ]),
                 
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label('Fecha de creación')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Fecha de actualización')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('toggleEstado')
+                    ->label(fn ($record) => $record->estado ? 'Inhabilitar' : 'Habilitar')
+                    ->icon(fn ($record) => $record->estado ? 'heroicon-o-eye' : 'heroicon-o-eye')
+
+                    ->color(fn ($record) => $record->estado ? 'danger' : 'primary')
+                    ->action(function ($record) {
+                        $record->estado = !$record->estado;
+                        $record->save();
+                    })
+                    ->requiresConfirmation()
+    
+                   ->visible(function () {
+                        /** @var \App\Models\User $user */
+                        $user = auth()->user();
+                        return auth()->check() && !$user->hasRole('Estudiante');
+                    })
+                                        
+                    ,
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

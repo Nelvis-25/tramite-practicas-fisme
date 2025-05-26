@@ -59,10 +59,11 @@ class SolicitudeResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('nombre')
+                Forms\Components\TextArea::make('nombre')
                     ->label('Nombre del plan de prácticas')
                     ->required()
-                    ->maxLength(700),
+                    ->maxLength(700)
+                    ->rows(2),
                 Forms\Components\Select::make('estudiante_id')
                     ->label('Selecione el nombre del estudiante')
                     ->relationship('estudiante', 'nombre')
@@ -86,76 +87,79 @@ class SolicitudeResource extends Resource
                         ->searchable()
                         ->required(),
                 Forms\Components\DatePicker::make('fecha_inicio')
-                ->label('Ingrese la fecha de inicio de su práctica'),
+                    ->label('Fecha de inicio de su práctica')
+                    ->required(),
                 Forms\Components\DatePicker::make('fecha_fin')
-                ->label('Ingrese la fecha que finalizara su práctica'),
+                    ->label('Fecha que finalizara su práctica')
+                    ->required(),
                 Forms\Components\FileUpload::make('solicitud')
-                ->label('Solicitud dirigida al Decano/pdf')
-                ->directory('solicitudes')
-                ->acceptedFileTypes(['application/pdf'])
-                ->maxSize(20240)
-                ->fetchFileInformation(true)
-                ->downloadable() 
-                ->openable() 
-                ->previewable(true) 
-                ->maxSize(20240),
+                    ->label('Solicitud dirigida al Decano (pdf)')
+                    ->directory('solicitudes')
+                    ->acceptedFileTypes(['application/pdf'])
+                    ->maxSize(20240)
+                    ->fetchFileInformation(true)
+                    ->downloadable() 
+                    ->openable() 
+                    ->previewable(true) 
+                    ->maxSize(20240),
                 Forms\Components\FileUpload::make('constancia')
-                ->label('Constancia de cursos aprobados/pdf')
-                ->directory('constancias')
-                ->acceptedFileTypes(['application/pdf'])
-                ->maxSize(20240)
-                ->fetchFileInformation(true)
-                ->downloadable() 
-                ->openable() 
-                ->previewable(true) 
-                ->maxSize(20240)
-                ->moveFiles(),
+                    ->label('Constancia de cursos aprobados (pdf)')
+                    ->directory('constancias')
+                    ->acceptedFileTypes(['application/pdf'])
+                    ->maxSize(20240)
+                    ->fetchFileInformation(true)
+                    ->downloadable() 
+                    ->openable() 
+                    ->previewable(true) 
+                    ->maxSize(20240)
+                    ->moveFiles(),
                 Forms\Components\FileUpload::make('informe')
-                ->label('Plan de Prácticas/pdf ')
-                ->directory('informes')
-                ->acceptedFileTypes(['application/pdf'])
-                ->maxSize(20240)
-                ->fetchFileInformation(true)
-                ->downloadable() 
-                ->openable() 
-                ->previewable(true) 
-                ->maxSize(20240),
+                    ->label('Plan de Prácticas (pdf) ')
+                    ->directory('informes')
+                    ->acceptedFileTypes(['application/pdf'])
+                    ->maxSize(20240)
+                    ->fetchFileInformation(true)
+                    ->downloadable() 
+                    ->openable() 
+                    ->previewable(true) 
+                    ->maxSize(20240),
                 Forms\Components\FileUpload::make('carta_presentacion')
-                ->label('Carta de autorización emitida por la Empresa/pdf ')
-                ->directory('cartas_presentacion') 
-                ->acceptedFileTypes(['application/pdf'])
-                ->maxSize(20240)
-                ->fetchFileInformation(true)
-                ->downloadable() 
-                ->openable() 
-                ->previewable(true) 
-                ->maxSize(20240),
+                    ->label('Carta de autorización emitida por la Empresa (pdf) ')
+                    ->directory('cartas_presentacion') 
+                    ->acceptedFileTypes(['application/pdf'])
+                    ->maxSize(20240)
+                    ->fetchFileInformation(true)
+                    ->downloadable() 
+                    ->openable() 
+                    ->previewable(true) 
+                    ->maxSize(20240),
                 Forms\Components\FileUpload::make('comprobante_pago')
-                ->label('Comprobante de pago/img ')
-                ->directory('comprobantes_pago')
-                ->acceptedFileTypes([ 'image/*'])
-                ->maxSize(20240)
-                ->fetchFileInformation(true)
-                ->downloadable() 
-                ->openable() 
-                ->previewable(true) 
-                ->maxSize(20240),
+                    ->label('Comprobante de pago (img) ')
+                    ->directory('comprobantes_pago')
+                    ->acceptedFileTypes([ 'image/*'])
+                    ->maxSize(20240)
+                    ->fetchFileInformation(true)
+                    ->downloadable() 
+                    ->openable() 
+                    ->previewable(true) 
+                    ->maxSize(20240),
                 Forms\Components\TextInput::make('estado')
-                ->required()
-                ->default('Pendiente') 
-                ->disabled() 
-                ->dehydrated(false),
+                    ->required()
+                    ->default('Pendiente') 
+                    ->disabled() 
+                    ->dehydrated(false),
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
+         
             ->columns([
                 Tables\Columns\TextColumn::make('nombre')
                 ->label('Nombre del plan de prácticas')
                 ->extraAttributes([
-                    'style' => 'width: 300px; word-wrap: break-word; white-space: normal;text-align: justify;',
+                    'style' => 'width: 550px; word-wrap: break-word; white-space: normal;text-align: justify;',
                 ])
                     ->searchable(),
                 Tables\Columns\TextColumn::make('estudiante.nombre')
@@ -169,88 +173,83 @@ class SolicitudeResource extends Resource
                    ->numeric()
                    ->sortable(),
                 Tables\Columns\TextColumn::make('fecha_inicio')
+                    ->label('Inicio de la práctica')
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('fecha_fin')
+                    ->label('Fin de la práctica')
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('solicitud')
-                ->label('Solicitud al decano')
-                ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')
-                ->url(function ($record) {
-                    if (!$record->solicitud) return null;
-                    return asset('storage/'.str_replace('storage/', '', $record->solicitud));
-                })
-                ->openUrlInNewTab()
-                ->icon('heroicon-o-document-text'),
+                Tables\Columns\IconColumn::make('solicitud')
+                    ->label('Solicitud al decano')
+                    ->icon('heroicon-o-document-text')
+                    ->alignCenter()
+                    ->color(fn ($record) => $record->solicitud ? 'primary' : 'danger')
+                    ->url(fn ($record) => $record->solicitud ? asset('storage/' . str_replace('storage/', '', $record->solicitud)) : null)
+                    ->openUrlInNewTab()
+                    ->tooltip(fn ($record) => $record->solicitud ? 'Ver solicitud ' : 'Sin archivo'),
 
-                Tables\Columns\TextColumn::make('constancia')
-                   ->label('Constancia de cursos aprobados')
-                        ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')
-                        ->url(function ($record) {
-                            if (!$record->constancia) return null;
-                            return asset('storage/'.str_replace('storage/', '', $record->constancia));
-                        })
-                            ->searchable()
-                            ->openUrlInNewTab()
-                            ->icon('heroicon-o-document-text'),
+               Tables\Columns\IconColumn::make('constancia')
+                    ->label('Constancia de cursos aprobados')
+                    ->icon('heroicon-o-document-text')
+                    ->alignCenter()
+                    ->color(fn ($record) => $record->constancia ? 'primary' : 'danger')
+                    ->url(fn ($record) => $record->constancia ? asset('storage/' . str_replace('storage/', '', $record->constancia)) : null)
+                    ->openUrlInNewTab()
+                    ->tooltip(fn ($record) => $record->constancia ? 'Ver constancia' : 'Sin archivo'),
 
-                Tables\Columns\TextColumn::make('informe')
-                   ->label('Plan de Prácticas')
-                ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')
-                ->url(function ($record) {
-                    if (!$record->informe) return null;
-                    return asset('storage/'.str_replace('storage/', '', $record->informe));
-                })
-                ->openUrlInNewTab()
-                ->icon('heroicon-o-document-text')
-                    ->searchable(),
+               Tables\Columns\IconColumn::make('informe')
+                    ->label('Plan de prácticas')
+                    ->icon('heroicon-o-document-text')
+                    ->alignCenter()
+                    ->color(fn ($record) => $record->informe ? 'primary' : 'danger')
+                    ->url(fn ($record) => $record->informe ? asset('storage/' . str_replace('storage/', '', $record->informe)) : null)
+                    ->openUrlInNewTab()
+                    ->tooltip(fn ($record) => $record->informe ? 'Ver plan de práctica' : 'Sin archivo')
+                     
+                    ,
+                   Tables\Columns\IconColumn::make('carta_presentacion')
+                     ->label('Carta de autorización')
+                     ->icon('heroicon-o-document-text')
+                     ->alignCenter()
+                     ->color(fn ($record) => $record->carta_presentacion ? 'primary' : 'danger')
+                     ->url(fn ($record) => $record->carta_presentacion ? asset('storage/' . str_replace('storage/', '', $record->carta_presentacion)) : null)
+                     ->openUrlInNewTab()
+                     ->tooltip(fn ($record) => $record->carta_presentacion ? 'Ver autorización' : 'Sin archivo'),
 
-                Tables\Columns\TextColumn::make('carta_presentacion')
-                ->label('Carta de autorización')
-                ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')
-                ->url(function ($record) {
-                    if (!$record->carta_presentacion) return null;
-                    return asset('storage/'.str_replace('storage/', '', $record->carta_presentacion));
-                })
-                ->openUrlInNewTab()
-                ->icon('heroicon-o-document-text')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('comprobante_pago')
-                ->label('Comprobante de pago')
-                ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')
-                ->url(function ($record) {
-                    if (!$record->comprobante_pago) return null;
-                    return asset('storage/'.str_replace('storage/', '', $record->comprobante_pago));
-                })
-                ->openUrlInNewTab()
-                ->icon('heroicon-o-document-text')
-                    ->searchable(),
+                 Tables\Columns\IconColumn::make('comprobante_pago')
+                    ->label('Comprobante de pago')
+                    ->icon('heroicon-o-document')
+                    ->alignCenter()
+                    ->color(fn ($record) => $record->comprobante_pago ? 'primary' : 'danger')
+                    ->url(fn ($record) => $record->comprobante_pago ? asset('storage/' . str_replace('storage/', '', $record->comprobante_pago)) : null)
+                    ->openUrlInNewTab()
+                    ->tooltip(fn ($record) => $record->comprobante_pago ? 'Ver comprobante de pago' : 'Sin archivo'),
 
                 Tables\Columns\TextColumn::make('estado')
                 ->label('Estado')
                     ->searchable()
-                    ->html()
-                    ->formatStateUsing(function ($state) {
-                        // Definir el color según el estado
-                        if ($state == 'Pendiente') {
-                            return "<span style='color:rgb(90, 66, 26); font-weight: bold;'>$state</span>"; 
-                        } elseif ($state == 'Aceptado') {
-                            return "<span style='color: #10b981; font-weight: bold;'>$state</span>"; 
-                        } elseif ($state == 'Rechazado') {
-                            return "<span style='color: #ef4444; font-weight: bold;'>$state</span>"; 
-                        }
-                        return $state;
-                    }),
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'Pendiente' => 'warning',             
+                        'Aceptado' => 'success',              
+                        'Rechazado' => 'danger',            
+                        'Comisión asignada' => 'primary',     
+                        default => 'gray',                   
+                    })
+                    ->formatStateUsing(fn ($state) => $state),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label('Fecha de creación')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Fecha de actualización')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])
@@ -339,13 +338,16 @@ class SolicitudeResource extends Resource
                     ->modalSubmitActionLabel('Guardar')
                     ->modalCancelActionLabel('Cancelar')
                     
-               
-                ->visible(function () {
-                    /** @var \App\Models\User $user */
-                    $user = auth()->user();
-                
-                    return !$user?->hasRole('Estudiante');
-                })
+                 ->visible(function ($record) {
+                        $user = auth()->user();
+                      /** @var User $user */
+
+                    if (in_array($record->estado, ['Comisión asignada'])) {
+                            // Solo admin puede ver en esos estados
+                            return $user->hasRole('Admin');
+                        }
+                        return $user->hasAnyRole(['Admin', 'Secretaria']);
+                    })
                 ,
 
                 Action::make('Asignar Jurado')
@@ -405,11 +407,18 @@ class SolicitudeResource extends Resource
                         ->success()
                         ->send();
                 })
-                ->visible(function () {
-                    $user = auth()->user();
-                    /** @var User $user */
-                    return !$user?->hasRole('Estudiante');
-                }), 
+                    ->visible(function ($record) {
+                        $user = auth()->user();
+                      /** @var User $user */
+
+                        if (in_array($record->estado, ['Comisión asignada'])) {
+                            // Solo admin puede ver en esos estados
+                            return $user->hasRole('Admin');
+                        }
+                        return $user->hasAnyRole(['Admin', 'Director']);
+                    })
+                ,
+
                 Action::make('notas')
                 ->label('')
                 ->icon('heroicon-o-chat-bubble-left')
@@ -460,7 +469,7 @@ class SolicitudeResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

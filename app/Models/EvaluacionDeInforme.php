@@ -13,9 +13,14 @@ class EvaluacionDeInforme extends Model
         'informe_de_practica_id',
         'jurado_de_informe_id',
         'fecha_evaluacion',
+        'nota',
+        'ronda',
         'observacion',
         'estado',
         'activo',
+    ];
+     protected $attributes = [
+        'estado' => 'Evaluado',
     ];
 
     public function jurados()
@@ -27,53 +32,70 @@ class EvaluacionDeInforme extends Model
     {
         return $this->belongsTo(InformeDePractica::class, 'informe_de_practica_id');
     }
-    public function observaciones()
-        {
-            return $this->hasMany(ObservacionEvaluacion::class, 'evaluacion_de_informe_id');
+   
+
+protected static function booted()
+{
+    static::created(function ($evaluacioinforme) {
+        if ($evaluacioinforme->estado !== 'Evaluado') {
+            return;
         }
 
-    protected static function booted()
-    {
-        static::updated(function ($evaluacioinforme) {
-            if (!in_array($evaluacioinforme->estado, ['Aprobado', 'Observado', 'Desaprobado'])) {
-                return;
+        $evaluacioinforme->actualizarEstadoPlanPadre();
+    });
+
+    static::updated(function ($evaluacioinforme) {
+        if ($evaluacioinforme->estado !== 'Evaluado') {
+            return;
+        }
+
+        $evaluacioinforme->actualizarEstadoPlanPadre();
+    });
+}
+
+        public function actualizarEstadoPlanPadre()
+        {
+            $plan = $this->informeDePractica;
+
+            // Paso 1: obtener la ronda más alta (última)
+            $ultimaRonda = $plan->evaluaciones()->max('ronda');
+
+            // Paso 2: obtener evaluaciones de esa última ronda con estado Evaluado
+            $evaluacionesRonda = $plan->evaluaciones()
+                ->where('ronda', $ultimaRonda)
+                ->where('estado', 'Evaluado')
+                ->get();
+
+            if ($evaluacionesRonda->count() < 3) {
+                return; // Aún no hay suficientes evaluaciones para proceder
             }
 
-            $evaluacioinforme->actualizarEstadoPlanPadre();
-        });
-    }
-     public function actualizarEstadoPlanPadre()
-    {
-        $plan = $this->informeDePractica;
-        $evaluacionesCompletadas = $plan->evaluaciones()
-            ->whereIn('estado', ['Aprobado', 'Observado', 'Desaprobado'])
-            ->get();
+            // Paso 3: eliminar las pendientes de esa ronda
+            $plan->evaluaciones()
+                ->where('ronda', $ultimaRonda)
+                ->where('estado', 'Pendiente')
+                ->delete();
 
-        if ($evaluacionesCompletadas->count() < 3) {
-            return; 
-        }
-        if ($evaluacionesCompletadas->contains('estado', 'Desaprobado')) {
-            $nuevoEstado = 'Desaprobado';
-        } elseif ($evaluacionesCompletadas->contains('estado', 'Observado')) {
-            $nuevoEstado = 'Observado';
-        } else {
-            $nuevoEstado = 'Aprobado';
-        }
-        $plan->updateQuietly(
-            [
+            // Paso 4: calcular promedio de las notas de esa ronda
+            $promedio = $evaluacionesRonda->avg('nota');
+            $promedioRedondeado = round($promedio);
+
+            // Paso 5: decidir nuevo estado según promedio
+            $nuevoEstado = ($promedioRedondeado < 12) ? 'Desaprobado' : 'Aprobado';
+
+            // Paso 6: actualizar informe de práctica
+            $plan->updateQuietly([
                 'estado' => $nuevoEstado,
                 'observaciones' => 'Sustentado',
             ]);
 
-        $plan->evaluaciones()
-            ->where('estado', 'Pendiente')
-            ->delete();
-
-        if ($plan->solicitudInforme && $plan->solicitudInforme->practica) {
-            $plan->solicitudInforme->practica->updateQuietly([
-                'estado' => 'Finalizado',
-            ]);
+            // Paso 7: actualizar práctica como finalizada
+            if ($plan->solicitudInforme && $plan->solicitudInforme->practica) {
+                $plan->solicitudInforme->practica->updateQuietly([
+                    'estado' => 'Finalizado',
+                    'activo' => false,
+                ]);
+            }
         }
 
-    }
 }

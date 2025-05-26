@@ -3,10 +3,10 @@
 namespace App\Policies;
 
 use App\Models\User;
-use App\Models\EvaluacionInforme;
+use App\Models\InformeDePractica;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
-class EvaluacionInformePolicy
+class InformeDePracticaPolicy
 {
     use HandlesAuthorization;
 
@@ -15,15 +15,15 @@ class EvaluacionInformePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_evaluacion::informe');
+        return $user->can('view_any_informe::de::practica');
     }
 
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, EvaluacionInforme $evaluacionInforme): bool
+    public function view(User $user, InformeDePractica $informeDePractica): bool
     {
-        return $user->can('view_evaluacion::informe');
+        return $user->can('view_informe::de::practica');
     }
 
     /**
@@ -31,23 +31,23 @@ class EvaluacionInformePolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_evaluacion::informe');
+        return $user->can('create_informe::de::practica');
     }
 
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, EvaluacionInforme $evaluacionInforme): bool
+    public function update(User $user, InformeDePractica $informeDePractica): bool
     {
-        return $user->can('update_evaluacion::informe');
+        return $user->can('update_informe::de::practica');
     }
 
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, EvaluacionInforme $evaluacionInforme): bool
+    public function delete(User $user, InformeDePractica $informeDePractica): bool
     {
-        return $user->can('delete_evaluacion::informe');
+        return $user->can('delete_informe::de::practica');
     }
 
     /**
@@ -55,15 +55,15 @@ class EvaluacionInformePolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_evaluacion::informe');
+        return $user->can('delete_any_informe::de::practica');
     }
 
     /**
      * Determine whether the user can permanently delete.
      */
-    public function forceDelete(User $user, EvaluacionInforme $evaluacionInforme): bool
+    public function forceDelete(User $user, InformeDePractica $informeDePractica): bool
     {
-        return $user->can('force_delete_evaluacion::informe');
+        return $user->can('force_delete_informe::de::practica');
     }
 
     /**
@@ -71,15 +71,15 @@ class EvaluacionInformePolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_evaluacion::informe');
+        return $user->can('force_delete_any_informe::de::practica');
     }
 
     /**
      * Determine whether the user can restore.
      */
-    public function restore(User $user, EvaluacionInforme $evaluacionInforme): bool
+    public function restore(User $user, InformeDePractica $informeDePractica): bool
     {
-        return $user->can('restore_evaluacion::informe');
+        return $user->can('restore_informe::de::practica');
     }
 
     /**
@@ -87,15 +87,15 @@ class EvaluacionInformePolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_evaluacion::informe');
+        return $user->can('restore_any_informe::de::practica');
     }
 
     /**
      * Determine whether the user can replicate.
      */
-    public function replicate(User $user, EvaluacionInforme $evaluacionInforme): bool
+    public function replicate(User $user, InformeDePractica $informeDePractica): bool
     {
-        return $user->can('replicate_evaluacion::informe');
+        return $user->can('replicate_informe::de::practica');
     }
 
     /**
@@ -103,6 +103,6 @@ class EvaluacionInformePolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_evaluacion::informe');
+        return $user->can('reorder_informe::de::practica');
     }
 }
