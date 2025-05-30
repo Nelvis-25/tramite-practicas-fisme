@@ -44,17 +44,39 @@ class SolicitudeResource extends Resource
     
         return $query;
     }
-    public static function canCreate(): bool
+   public static function canCreate(): bool
     {
         $user = auth()->user();
-    /** @var User $user */
+            /** @var User $user */
         if ($user && $user->hasRole('Estudiante')) {
-            return !optional($user->estudiante)->solicitude()->exists();
+            $estudiante = $user->estudiante;
+
+            if (!$estudiante) {
+                return false;
+            }
+
+            $solicitudes = $estudiante->solicitude;
+
+            if ($solicitudes->isEmpty()) {
+                return true; 
+            }
+
+            foreach ($solicitudes as $solicitud) {
+            
+                foreach ($solicitud->planesPractica as $plan) {
+                    if ($plan->estado === 'Desaprobado') {
+                        return true; 
+                    }
+                }
+            }
+
+            return false; 
         }
-    
+
         return true;
     }
 
+    
     public static function form(Form $form): Form
     {
         return $form
@@ -172,6 +194,15 @@ class SolicitudeResource extends Resource
                    ->label('Asesor')
                    ->numeric()
                    ->sortable(),
+                Tables\Columns\TextColumn::make('asesor.nombre')
+                    ->label('Asesor')
+                    ->formatStateUsing(function ($state, $record) {
+                        $grado = $record?->asesor?->grado_academico;
+                        return $grado ? $grado . ' ' . $state : $state;
+                    })
+                    ->sortable()
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('fecha_inicio')
                     ->label('Inicio de la práctica')
                     ->date()
@@ -255,7 +286,6 @@ class SolicitudeResource extends Resource
             ])
             ->actions([
                 
-                Tables\Actions\EditAction::make(),
                 Action::make('Validar')
                     ->label('Validar')
                     ->icon('heroicon-o-check-circle')  
@@ -353,8 +383,22 @@ class SolicitudeResource extends Resource
                 Action::make('Asignar Jurado')
                 ->label('Asignar Comisión')
                 ->icon('heroicon-o-user-group')
+                ->modalIcon('heroicon-o-user-group') 
                 ->requiresConfirmation()
+                ->modalWidth('md')
                 ->color('primary')
+                ->modalHeading(function ($record) {
+                    $comision = \App\Models\ComisionPermanente::where('estado', true)
+                        ->where('fecha_fin', '>', now())
+                        ->first();
+
+                    if (!$comision) {
+                        return 'NO SE ENCONTRO UNA COMISION ACTIVA';
+                    }
+
+                    return 'SE ASIGNARA LA  "' . $comision->nombre . '" A ESTA SOLICITUD';
+                })
+                ->modalDescription('¿Desea asignar esta comisión ?')
                 ->action(function ($record) {
             
                     // ✅ Validar que la solicitud esté en estado 'Validado'
@@ -415,7 +459,7 @@ class SolicitudeResource extends Resource
                             // Solo admin puede ver en esos estados
                             return $user->hasRole('Admin');
                         }
-                        return $user->hasAnyRole(['Admin', 'Director']);
+                        return $user->hasAnyRole(['Admin', 'Director ']);
                     })
                 ,
 
@@ -465,6 +509,20 @@ class SolicitudeResource extends Resource
                     ->modalCancelActionLabel('Cerrar')
                    ->modalSubmitActionLabel('Salir')
                 ,
+                Tables\Actions\EditAction::make()
+                 ->visible(function ($record) {
+                    $user = auth()->user();
+                        /** @var User $user */
+                        if ($user->hasRole('Estudiante')) {
+                            foreach ($record->planesPractica as $plan) {
+                                if (in_array($plan->estado, ['Observado', 'Pendiente'])) {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        }
+
+                        return true; }),
                 
             ])
             ->bulkActions([

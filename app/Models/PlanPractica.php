@@ -43,6 +43,7 @@ class PlanPractica extends Model
     {
         return $this->hasMany(EvaluacionPlanDePractica::class);
     }
+   
 
     public function practicas()
 {

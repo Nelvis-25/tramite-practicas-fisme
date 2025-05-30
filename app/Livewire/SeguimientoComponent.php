@@ -8,20 +8,31 @@ use App\Models\PlanPractica;
 use App\Models\IntegranteComision;
 use Carbon\Carbon;
 use App\Models\EvaluacionPlanDePractica;
+use App\Models\InformeDePractica;
+use App\Models\SolicitudInforme;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class SeguimientoComponent extends Component
 {
-    public $fechaCreacion;
     public $nombreSolicitud;
+    public $fechaCreacion;
     public $estadoSolicitud;
     public $jurados = [];
     public $fechaSustentacion;
     public $observaciones;
     public $observacioneSolicitud;
     public $estadoPlan;
-     public $evaluacionesConObservaciones = []; 
+    public $evaluacionesConObservaciones = []; 
+
+    // atributos del informe de practicas 
+    public $fechaSolicitudInforme;
+    public $estadoSolicitudInforme;
+    public $observacionesSolicitudInforme;
+    public $fechaSustentacionInforme;
+    public $estadoInforme;
+    public $juradosInforme = [];
+     public $observacionesInforme;
     public function mount()
     {
         $user = Auth::user();
@@ -31,7 +42,7 @@ class SeguimientoComponent extends Component
 
             if ($estudiante) {
                 $solicitud = Solicitude::where('estudiante_id', $estudiante->id)->latest()->first();
-
+                $solicitudinforme = SolicitudInforme::where('estudiante_id', $estudiante->id)->latest()->first(); 
                 if ($solicitud) {
                     $this->fechaCreacion = $solicitud->created_at->format('d/m/Y');
                     $this->nombreSolicitud = $solicitud->nombre;
@@ -85,6 +96,40 @@ class SeguimientoComponent extends Component
                             })->toArray();
                         }
                     }
+                }
+
+                if ($solicitudinforme) {
+                   $this->fechaSolicitudInforme = $solicitudinforme->created_at->format('d/m/Y');
+              
+                    if (in_array($solicitudinforme->estado, ['Aceptado', 'Rechazado','Jurado asignado'])) {
+                        $this->estadoSolicitudInforme = $solicitudinforme->estado;
+                    }
+                    if ($solicitudinforme->estado === 'Rechazado') {
+                            $this->observacionesSolicitudInforme = $solicitudinforme->observaciones->last()->observacion ?? 'Sin observaciones registradas';
+                        }
+                    
+                    $informe = InformeDePractica::with(['evaluaciones'])
+                         ->where('solicitud_informe_id', $solicitudinforme->id)
+                         ->first();
+                     if ($informe) {
+                        // ✅ Obtener fecha de sustentación si existe
+                        $this->fechaSustentacionInforme = $informe->fecha_sustentacion 
+                        ? Carbon::parse($informe->fecha_sustentacion)->format('d/m/Y H:i') 
+                        : null;
+                         $this->observacionesInforme = $plan->observaciones ?? null;
+                        $this->estadoInforme = $informe->estado;
+                         
+                        //  Obtener jurados (jurados de informe )
+                        $this->juradosInforme = $informe->jurados()
+                        ->with('docente') // Cargar relación docente
+                        ->get()
+                        ->map(function ($jurado) {
+                            return [
+                                'nombre' => $jurado->docente->nombre ?? 'No asignado',
+                                'cargo' => $jurado->cargo ?? 'Sin cargo definido'
+                            ];
+                        })->toArray();
+                    }  
                 }
             }
         }

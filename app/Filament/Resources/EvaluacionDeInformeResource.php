@@ -84,14 +84,14 @@ class EvaluacionDeInformeResource extends Resource
                         2 => 'Segunda evaluación',
                     ])
                     ->default(2)
-                    //->disabled()
+                    ->disabled()
                     ->required()
                     ->columnSpan([
                         'default' => 3,
                         'md' => 3,
                     ]),
 
-                // Bloque específico: Jurado (7) + espacio (1) + Nota (4)
+                
                     Forms\Components\Select::make('jurado_de_informe_id')
                         ->label('Jurado de informe')
                         ->options(function (callable $get) {
@@ -177,66 +177,52 @@ class EvaluacionDeInformeResource extends Resource
         return $table
         
             ->columns([
-                //Tables\Columns\TextColumn::make('informeDePractica.solicitudInforme.practica.solicitude.nombre')
-                  //  ->label('Informe de practica')
-                  //  ->searchable()
-                   // ->sortable()
-                   // ->extraAttributes([
-                   // 'style' => 'width: 400px; word-wrap: break-word; white-space: normal;text-align: justify;',
-                   // ]),
+                Tables\Columns\TextColumn::make('informeDePractica.solicitudInforme.practica.solicitude.nombre')
+                  ->label('Informe ')
+                   ->searchable()
+                   ->sortable()
+                   ->extraAttributes([
+                   'style' => 'width: 400px; word-wrap: break-word; white-space: normal;text-align: justify;',
+                    ])
+                    ->toggleable(isToggledHiddenByDefault: true), 
                 Tables\Columns\TextColumn::make('informeDePractica.solicitudInforme.estudiante.nombre')
                     ->label('Nombre del Practicante')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('informeDePractica.solicitudInforme.informe')
-                    ->label('Informe de Práctica') 
-                    ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')
-                    ->url(fn ($record) => $record->informeDePractica->solicitudInforme->informe ? asset('storage/'.str_replace('storage/', '', $record->informeDePractica->solicitudInforme->informe)) : null)
-                    ->openUrlInNewTab()
-                    ->icon('heroicon-o-document-text')
-                    ->searchable()
-                     ->extraAttributes([
-                        'style' => 'width: 200px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;',
-                    ]), 
+                
+                 Tables\Columns\IconColumn::make('informeDePractica.solicitudInforme.informe')
+                     ->label('Informe')
+                     ->icon('heroicon-o-document-text')
+                     ->alignCenter()
+                     ->color(fn ($record) => $record->informeDePractica->solicitudInforme->informe ? 'primary' : 'danger')
+                     ->url(fn ($record) => $record->informeDePractica->solicitudInforme->informe? asset('storage/' . str_replace('storage/', '', $record->informeDePractica->solicitudInforme->informe)) : null)
+                     ->openUrlInNewTab()
+                     ->tooltip(fn ($record) => $record->informeDePractica->solicitudInforme->informe ? 'Ver informe' : 'Sin archivo'),
+                
+                
                 Tables\Columns\TextColumn::make('jurados.docente.nombre')
                     ->label('Jurado de Informe')
                     ->formatStateUsing(fn ($state, $record) => $state . ' - ' . $record->jurados->cargo)
                     ->searchable()
                     ->sortable(),
-              // Tables\Columns\TextColumn::make('observacion')
-                   // ->searchable()
-                   // ->extraAttributes([
-                  //      'style' => 'width: 250px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; word-wrap: break-word;',
-                   // ]),
+
+                  Tables\Columns\TextColumn::make('informeDePractica.fecha_sustentacion')
+                    ->label('Fecha programada')
+                    ->alignCenter()
+                    ->searchable()
+                    ->dateTime('d-m-Y h:i')
+                    ->sortable()
+                     
+                    ->placeholder('No programada'),
+
                 Tables\Columns\TextColumn::make('nota')
                     ->label('Nota')
                     ->searchable()
                     ->color(function ($record) {
                             return $record->nota < 12 ? 'danger' : 'primary';
                         }),
-                Tables\Columns\TextColumn::make('estado')
-                    ->label('Estado')
-                    ->searchable()
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'evaluacion', 'Evaluado' => 'primary',   // azul
-                        'pendiente', 'Pendiente' => 'warning',                // amarillo
-                        default => 'gray',                       // gris por defecto
-                    })
-                    ->formatStateUsing(fn ($state) => match ($state) {
-                        'evaluacion', 'Evaluado' => 'Evaluado',
-                        'pendiente', 'Pendiente' => 'Pendiente',
-                        default => ucfirst($state),
-                    }),
-              
-               Tables\Columns\TextColumn::make('ronda')
-                    ->label('Ronda')
-                    ->searchable()
-                    ->sortable()
-                    ->formatStateUsing(fn ($state) => $state == 1 ? 'Primera Evaluación' : ($state == 2 ? 'Segunda Evaluación' : ''))
-                    ->toggleable(isToggledHiddenByDefault: true), 
-               Tables\Columns\TextColumn::make('promedio_ronda')
-                ->label('Promedio ')
+                Tables\Columns\TextColumn::make('promedio_ronda')
+                ->label('Promedio  ')
                 ->getStateUsing(function ($record) {
                     $plan = $record->informeDePractica;
                     $rondaActual = $record->ronda;
@@ -252,9 +238,43 @@ class EvaluacionDeInformeResource extends Resource
                     // Calcular el promedio redondeado de las notas en esa ronda
                     return round($evaluaciones->avg('nota'));
                 })
-                ->toggleable(isToggledHiddenByDefault: true),  
-               Tables\Columns\TextColumn::make('updated_at')
+                 ->color(function ($state) {
+                        if ($state === '-') {
+                            return null; 
+                        }
+
+                        return $state < 12 ? 'danger' : 'primary'; 
+                    })
+                ->toggleable(isToggledHiddenByDefault: true), 
+
+                Tables\Columns\TextColumn::make('ronda')
+                    ->label('Ronda')
+                    ->searchable()
+                    ->sortable()
+                    ->formatStateUsing(fn ($state) => $state == 1 ? 'Primera Evaluación' : ($state == 2 ? 'Segunda Evaluación' : ''))
+                    ->toggleable(isToggledHiddenByDefault: true), 
+
+                Tables\Columns\TextColumn::make('estado')
+                    ->label('Estado')
+                    ->searchable()
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'evaluacion', 'Evaluado' => 'primary',   // azul
+                        'pendiente', 'Pendiente' => 'warning',                // amarillo
+                        default => 'gray',                       // gris por defecto
+                    })
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'evaluacion', 'Evaluado' => 'Evaluado',
+                        'pendiente', 'Pendiente' => 'Pendiente',
+                        default => ucfirst($state),
+                    }),
+                
+                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Fecha de Evaluación')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                    Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -263,10 +283,7 @@ class EvaluacionDeInformeResource extends Resource
                     ->trueColor('primary')  
                     ->falseColor('gray')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                
                 
             ])
             ->filters([
@@ -275,7 +292,7 @@ class EvaluacionDeInformeResource extends Resource
             ->actions([
                Tables\Actions\Action::make('evaluar')
                 ->label('Evaluar')
-                ->icon('heroicon-o-document-check')
+                ->icon('heroicon-o-document-plus')
                 ->modalHeading(fn ($record) => 'EVALUANDO INFORME DE PRÁCTICA DE ' . strtoupper($record->informeDePractica->solicitudInforme->estudiante->nombre))
                 ->requiresConfirmation()
                 //->visible(fn ($record) => $record->estado !== 'Evaluado')
@@ -316,6 +333,66 @@ class EvaluacionDeInformeResource extends Resource
                 ->modalSubmitActionLabel('Guardar')
                 ->modalCancelActionLabel('Cancelar'),
 
+                    Tables\Actions\ActionGroup::make([
+                        
+                        Tables\Actions\Action::make('ver_acta')
+                            ->label('Ver Acta')
+                            ->icon('heroicon-o-eye')
+                            ->color('primary')
+                            ->url(fn ($record) => route('pdf.acta', ['id' => $record->id]))
+                            ->openUrlInNewTab(),  
+                            
+                        Tables\Actions\Action::make('observar')
+                            ->label('Observar')
+                            ->color('primary')
+                            ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                            ->modalHeading(fn ($record) => 'OBSERVANDO INFORME DE PRÁCTICA DE ' . strtoupper($record->informeDePractica->solicitudInforme->estudiante->nombre))
+                            ->requiresConfirmation()
+                            ->modalIcon('heroicon-o-pencil')
+                            ->modalWidth('md')  // Título del modal
+                            ->form([
+                                Forms\Components\Textarea::make('observacion')
+                                    ->label('Observaciones') 
+                                    ->placeholder('Escribe tus observaciones aquí...')
+                                    ->columnSpanFull()  
+                                    ->maxLength(600),  
+                            ])
+                            ->action(function ($record, array $data) {
+                                $record->update(['observacion' => $data['observacion']]);
+                                
+                               
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Observacines registradas con éxito')
+                                    ->success()
+                                    ->send();
+                            }),
+                    ])
+                    
+
+                        ->icon('heroicon-o-document-duplicate') 
+                        ->label('')
+                        ->color('primary')
+                        ->extraAttributes([
+                            'title' => 'Acta',
+                            
+                        ])             
+                        ->visible(function ($record) {
+                        $informeId = $record->informe_de_practica_id;
+                        $ronda = $record->ronda;
+                        $evaluacionesRonda = \App\Models\EvaluacionDeInforme::where('informe_de_practica_id', $informeId)
+                            ->where('ronda', $ronda)
+                            ->with('jurados')
+                            ->get();
+                        $haySecretario = $evaluacionesRonda->contains(function ($evaluacion) {
+                            return $evaluacion->jurados && $evaluacion->jurados->cargo === 'Secretario';
+                        });
+                        if ($haySecretario) {
+                            return $record->jurados && $record->jurados->cargo === 'Secretario';
+                        }
+
+                        return $record->jurados && $record->jurados->cargo === 'Accesitario';
+                    }),  
+                    
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])

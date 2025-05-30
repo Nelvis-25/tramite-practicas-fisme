@@ -59,6 +59,10 @@ class Solicitude extends Model
 {
     return $this->hasMany(Practica::class, 'docente_id');
 }
+ public function planesPractica()
+{
+    return $this->hasMany(PlanPractica::class, 'solicitude_id');
+}
 
     protected static function boot()
     {

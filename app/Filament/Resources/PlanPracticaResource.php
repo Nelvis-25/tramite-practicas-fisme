@@ -29,6 +29,34 @@ class PlanPracticaResource extends Resource
     protected static ?string $pluralLabel = 'Plan de Prácticas';
     protected static ?string $navigationGroup = 'Plan de Prácticas';
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    /** @var User $user */
+public static function shouldRegisterNavigation(): bool
+{
+    $user = auth()->user();
+      /** @var User $user */
+    if (!$user->hasRole('Comisión Permanente')) {
+        return true;
+    }
+
+    if (!$user->docente) {
+        return false;
+    }
+
+    $comisionActiva = \App\Models\ComisionPermanente::where('estado', true)
+        ->where('fecha_fin', '>', now())
+        ->first();
+
+    if (!$comisionActiva) {
+        return false;
+    }
+    $esPresidente = $user->docente->integranteComision()
+        ->where('comision_permanente_id', $comisionActiva->id)
+        ->where('cargo', 'Presidente')
+        ->exists();
+
+    return $esPresidente;
+}// recuerda revisar esta validacion
+
 
     public static function form(Form $form): Form
     {
@@ -60,49 +88,68 @@ class PlanPracticaResource extends Resource
             ->columns([
 
                 Tables\Columns\TextColumn::make('solicitude.estudiante.tipo_estudiante')
-                ->label('Est/Egre')
-                ->numeric()
-                ->searchable(),
+                    ->label('Est/Egre')
+                    ->numeric()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('solicitude.estudiante.nombre')
                     ->label('Nombre del estudiante')
                     ->numeric()
                     ->sortable()
                     ->searchable(),
-                    Tables\Columns\TextColumn::make('solicitude.asesor.nombre')
+
+                Tables\Columns\TextColumn::make('solicitude.asesor.nombre')
                     ->label('Asesor')
-                    ->numeric()
+                    ->formatStateUsing(function ($state, $record) {
+                        $grado = $record->solicitude?->asesor?->grado_academico;
+                        return $grado ? $grado . ' ' . $state : $state;
+                    })
                     ->sortable()
-                    ->searchable(),  
-                
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('solicitude.nombre')
                     ->label('Titulo de práctica')
                     ->extraAttributes([
-                        'style' => 'width: 300px; word-wrap: break-word; white-space: normal;text-align: justify;',
+                        'style' => 'width: 347px; word-wrap: break-word; white-space: normal;text-align: justify;',
                     ])
                     ->numeric()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
                  
-                    Tables\Columns\TextColumn::make('solicitude.informe')
+                Tables\Columns\IconColumn::make('solicitude.informe')
                     ->label('Plan de práctica')
-                    
-                    ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')  // Usar la misma lógica para mostrar el nombre del archivo
-                    ->url(function ($record) {
-                        if (!$record->solicitude || !$record->solicitude->informe) return null;
-                        return asset('storage/'.str_replace('storage/', '', $record->solicitude->informe));  // Asegurarte de acceder correctamente a "informe" en el objeto "solicitude"
-                    })
-                    ->openUrlInNewTab()
                     ->icon('heroicon-o-document-text')
-                    ->searchable()
-                    ->extraAttributes([
-                        'style' => 'width: 200px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; word-wrap: break-word;',
-                    ]),
+                    ->alignCenter()
+                    ->color(fn ($record) => $record->solicitude && $record->solicitude->informe ? 'primary' : 'danger')
+                    ->url(fn ($record) => $record->solicitude && $record->solicitude->informe ? asset('storage/' . ltrim(str_replace('storage/', '', $record->solicitude->informe), '/')) : null
+                    )
+                    ->openUrlInNewTab()
+                    ->tooltip(fn ($record) => $record->solicitude && $record->solicitude->informe ? 'Ver plan de práctica' : 'Sin archivo'
+                    )
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('comisionPermanente.nombre')
                     ->searchable()
                     ->numeric()
-                    ->sortable(),
-                    TextColumn::make('cargos_comision')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+               
                     
-                    ->label('Cargo de la comisión')
+               Tables\Columns\TextColumn::make('nombres_comision')
+                    ->label('Integrantes de la Comisión')
+                    ->extraAttributes(['style' => 'width: 280px'])
+                    ->html()
+                    
+                    ->getStateUsing(function ($record) {
+                        return $record->comisionPermanente?->integranteComision->map(function ($integrante) {
+                            $grado = $integrante->docente->grado_academico ?? '';
+                            $nombre = $integrante->docente->nombre ?? '';
+                            return trim("$grado $nombre");
+                        })->implode('<br>') ?? '<em>Sin integrantes</em>';
+                    })
+                    ->wrap(),
+                
+                 Tables\Columns\TextColumn::make('cargos_comision')
+                    
+                    ->label('Cargo ')
                     ->html()
                     ->getStateUsing(function ($record) {
                         return $record->comisionPermanente?->integranteComision->map(function ($integrante) {
@@ -110,34 +157,28 @@ class PlanPracticaResource extends Resource
                         })->implode('<br>') ?? '<em>Sin cargos</em>';
                     })
                     ->wrap(), 
-                    
-                    TextColumn::make('nombres_comision')
-                    ->label('Integrantes de la Comisión')
-                    ->extraAttributes(['style' => 'width: 250px'])
-                    ->html()
-                    ->getStateUsing(function ($record) {
-                        return $record->comisionPermanente?->integranteComision->map(function ($integrante) {
-                            return "{$integrante->docente->nombre}";
-                        })->implode('<br>') ?? '<em>Sin integrantes</em>';
-                    })
-                    ->wrap(),
-                Tables\Columns\TextColumn::make('fecha_resolucion')
-                    ->label('Fecha de resolución')
-                  ->searchable()
-                    ->date()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('fecha_entrega_a_docentes')
-                ->searchable()
-                    ->date()
-                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('fecha_sustentacion')
                    ->label('Fecha de sustentación')
+                    ->alignCenter()
                    ->searchable()
                     ->dateTime()
                     ->sortable(),
-                
+                Tables\Columns\TextColumn::make('fecha_entrega_a_docentes')
+                    ->searchable()
+                     ->alignCenter()
+                    ->date()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('fecha_resolucion')
+                    ->label('Fecha de resolución')
+                     ->alignCenter()
+                    ->searchable()
+                    ->date()
+                    ->sortable()
+                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('observaciones')
-                    ->label('Sustentación')
+                    ->label('Presentación')
+                     
                     ->wrap()
                     ->html()
                     ->formatStateUsing(function ($state) {
@@ -153,9 +194,11 @@ class PlanPracticaResource extends Resource
                     ->sortable()
                     ->extraAttributes([
                         'style' => 'width: 150px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; word-wrap: break-word;',
-                    ]),
+                    ])
+                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('estado')
                     ->label('Estado') 
+                     ->alignCenter()
                     ->searchable()
                     ->badge()
                     ->color(fn ($state) => match ($state) {
@@ -174,6 +217,7 @@ class PlanPracticaResource extends Resource
                 
                 IconColumn::make('semaforo')
                     ->label('Semáforo')
+                     ->alignCenter()
                     ->getStateUsing(fn () => true)
                     ->icon(function ($record) {
                         if (!$record->created_at) {
@@ -197,11 +241,11 @@ class PlanPracticaResource extends Resource
                         if ($record->fecha_sustentacion) {
                             $dias = \Carbon\Carbon::parse($record->created_at)
                                 ->diffInWeekdays($record->fecha_sustentacion);
-                            return ($dias <= 15) ? 'success' : 'danger';
+                            return ($dias <= 15) ? 'primary' : 'danger';
                         }
                 
                         $fechaLimite = \Carbon\Carbon::parse($record->created_at)->addWeekdays(15);
-                        return now()->gt($fechaLimite) ? 'danger' : 'success';
+                        return now()->gt($fechaLimite) ? 'danger' : 'primary';
                     })
                     ->tooltip(function ($record) {
                         if (!$record->created_at) {

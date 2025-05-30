@@ -75,9 +75,10 @@ class User extends Authenticatable implements  HasAvatar
     public function estudiante(): HasOne {
         return $this->hasOne(Estudiante::class);
     }
-    public function docente(): BelongsTo {
-        return $this->belongsTo(Docente::class);
-    }
+    public function docente(): HasOne {
+    return $this->hasOne(Docente::class);
+}
+
     public function canAccessPanel(Panel $panel): bool
     {
         return $this->can('access-admin-panel');

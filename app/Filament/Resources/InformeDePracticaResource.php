@@ -57,59 +57,76 @@ class InformeDePracticaResource extends Resource
                 Tables\Columns\TextColumn::make('solicitudInforme.estudiante.nombre')
                     ->label('Nombre del estudiante')
                     ->sortable()
-                    ->searchable(),
-                 Tables\Columns\TextColumn::make('solicitudInforme.practica.solicitude.nombre')
-                    ->label('Titulo de práctica')
-                    ->extraAttributes([
-                        'style' => 'width: 380px; word-wrap: break-word; white-space: normal;text-align: justify;',
-                    ])
-                    ->sortable()
+                    ->numeric()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('solicitudInforme.practica.solicitude.asesor.nombre')
                     ->label('Asesor')
-                    ->sortable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('solicitudInforme.informe')
-                    ->label('Informe de práctica')
-                    ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')
-                    ->url(function ($record) {
-                        $ruta = $record->solicitudInforme?->informe;
-                
-                        return $ruta ? asset('storage/' . ltrim(str_replace('storage/', '', $ruta), '/')) : null;
+                    ->formatStateUsing(function($state, $record){
+                      $grado = $record->solicitudInforme?->practica?->solicitude?->asesor?->grado_academico;
+                     return $grado ? $grado . ' ' . $state : $state;
                     })
-                    ->openUrlInNewTab()
-                    ->icon('heroicon-o-document-text')
+                    ->sortable()
                     ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                 Tables\Columns\TextColumn::make('solicitudInforme.practica.solicitude.nombre')
+                     ->label('Titulo de práctica')
                     ->extraAttributes([
-                        'style' => 'width: 200px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;',
-                    ]),
-                    Tables\Columns\TextColumn::make('jurados')
-                        ->label('Jurados')
-                        ->html()
-                        ->formatStateUsing(function ($record) {
-                            return $record->jurados->map(fn ($jurado) =>
-                                "<div>{$jurado->docente->nombre}</div>"
-                            )->implode('');
-                        }),
+                        'style' => 'width: 347px; word-wrap: break-word; white-space: normal;text-align: justify;',
+                    ])
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+                
+               Tables\Columns\IconColumn::make('solicitudInforme.informe')
+                    ->label('Informe')
+                    ->icon('heroicon-o-document-text')
+                    ->alignCenter()
+                    ->color(fn ($record) => $record->solicitudInforme && $record->solicitudInforme->informe ? 'primary' : 'danger')
+                    ->url(fn ($record) => 
+                        $record->solicitudInforme && $record->solicitudInforme->informe
+                            ? asset('storage/' . ltrim(str_replace('storage/', '', $record->solicitudInforme->informe), '/'))
+                            : null
+                    )
+                    ->openUrlInNewTab()
+                    ->tooltip(fn ($record) => $record->solicitudInforme && $record->solicitudInforme->informe ? 'Ver informe' : 'Sin archivo')
+                    ->toggleable(isToggledHiddenByDefault: false),              
+    
+                  Tables\Columns\TextColumn::make('jurados')
+                    ->label('Jurados')
+                    ->searchable()
+                    ->html()
+                    ->formatStateUsing(function ($record) {
+                        return $record->jurados->map(fn ($jurado) =>
+                            "<div>{$jurado->docente->grado_academico} {$jurado->docente->nombre}</div>"
+                        )->implode('');
+                    }),
 
                     Tables\Columns\TextColumn::make('jurados.cargo')
                         ->label('Cargos')
+                        ->searchable()
                         ->html()
                         ->formatStateUsing(function ($state) {
                             return str_replace(',', '<br>', $state);
                         }),
-   Tables\Columns\TextColumn::make('fecha_resolucion')
-                    ->date()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('fecha_entrega_a_docentes')
-                    ->date()
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('fecha_sustentacion')
+                   ->label('Fecha de sustentación')
+                   ->alignCenter()
+                   ->searchable()
                     ->dateTime()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('estado')
-                    ->label('Estado') 
-                    ->searchable(),
+                Tables\Columns\TextColumn::make('fecha_entrega_a_docentes')
+                    ->searchable()
+                    ->alignCenter()
+                    ->date()
+                    ->sortable(),
+                 Tables\Columns\TextColumn::make('fecha_resolucion')
+                    ->label('Fecha de resolución')
+                     ->alignCenter()
+                    ->searchable()
+                    ->date()
+                    ->sortable()
+                     ->toggleable(isToggledHiddenByDefault: false),
+                
                 Tables\Columns\TextColumn::make('observaciones')
                     ->label('Sustentación')
                     ->wrap()
@@ -129,8 +146,34 @@ class InformeDePracticaResource extends Resource
                     ->sortable()
                     ->extraAttributes([
                         'style' => 'width: 160px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; word-wrap: break-word;',
-                    ]),
-                IconColumn::make('semaforo')
+                    ])
+                     ->toggleable(isToggledHiddenByDefault: false),
+                
+                Tables\Columns\TextColumn::make('estado')
+                    ->label('Estado') 
+                     ->alignCenter()
+                    ->searchable()
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'Pendiente' => 'warning',             
+                        'Observado' => 'success',              
+                        'Desaprobado' => 'danger',            
+                        'Aprobado' => 'primary',     
+                        default => 'gray',                   
+                    })
+                    ->formatStateUsing(fn ($state) => $state)
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                 Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                    
+                     IconColumn::make('semaforo')
                     ->label('Semáforo')
                     ->getStateUsing(fn () => true)
                     ->icon(function ($record) {
@@ -184,15 +227,9 @@ class InformeDePracticaResource extends Resource
                         return ($diasRestantes > 0)
                             ? "Plazo: {$diasRestantes} días hábiles restantes"
                             : "¡Plazo vencido hace " . abs($diasRestantes) . " días hábiles!";
-                    }),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    })
+                     ->toggleable(isToggledHiddenByDefault: false),
+                
             ])
             ->filters([
                 //
@@ -204,8 +241,10 @@ class InformeDePracticaResource extends Resource
                 ->modalHeading(' ')
                 ->requiresConfirmation()
                 ->modalIcon('heroicon-o-calendar-days')
-                ->modalHeading('ASIGNAR FECHA DE SUSTENTACIÓN')
-                ->modalSubmitActionLabel('Guardar')
+                ->modalHeading(function ($record) {
+                $nombreEstudiante = $record->solicitudInforme->estudiante->nombre;
+                return strtoupper("Asignando fecha de sustentación a {$nombreEstudiante}"); })
+                 ->modalSubmitActionLabel('Guardar')
                 ->modalWidth('md')
                 ->form([
                     
@@ -258,7 +297,9 @@ class InformeDePracticaResource extends Resource
                     ->label('Asignar Resolución')
                     ->icon('heroicon-o-document-check')
                     ->modalHeading(' ')
-                    ->modalHeading('ASIGNAR RESOLUCIÓN')
+                    ->modalHeading(function ($record) {
+                    $nombreEstudiante = $record->solicitudInforme->estudiante->nombre;
+                    return strtoupper("ASIGNANDO RESOLUCIÓN a {$nombreEstudiante}"); })
                     ->requiresConfirmation()
                     ->modalIcon('heroicon-o-clipboard-document-check')
                     ->modalSubmitActionLabel('Guardar')

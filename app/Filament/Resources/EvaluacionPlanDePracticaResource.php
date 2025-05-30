@@ -163,20 +163,15 @@ class EvaluacionPlanDePracticaResource extends Resource
                     ])
                     ->numeric()
                     ->searchable(),
-
-                    Tables\Columns\TextColumn::make('planPractica.solicitude.informe')
-                    ->label('Plan de práctica')
-                    ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')
-                    ->url(function ($record) {
-                        if (!$record->planPractica?->solicitude?->informe) return null;
-                        return asset('storage/' . str_replace('storage/', '', $record->planPractica->solicitude->informe));
-                    })
-                    ->openUrlInNewTab()
-                    ->icon('heroicon-o-document-text')
-                    ->searchable()
-                    ->extraAttributes([
-                        'style' => 'width: 200px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; word-wrap: break-word;',
-                    ]),
+                    Tables\Columns\IconColumn::make('planPractica.solicitude.informe')
+                     ->label('Plan de práctica')
+                     ->icon('heroicon-o-document-text')
+                     ->alignCenter()
+                     ->color(fn ($record) => $record->planPractica->solicitude->informe ? 'primary' : 'danger')
+                     ->url(fn ($record) => $record->planPractica->solicitude->informe? asset('storage/' . str_replace('storage/', '', $record->planPractica->solicitude->informe)) : null)
+                     ->openUrlInNewTab()
+                     ->tooltip(fn ($record) => $record->planPractica->solicitude->informe ? 'Ver plan de práctica' : 'Sin archivo'),
+                    
                     Tables\Columns\TextColumn::make('integranteComision.docente.nombre')
                     ->label('Integrante de Comisión')
                     ->formatStateUsing(fn ($state, $record) => $state . ' - ' . $record->integranteComision->cargo)

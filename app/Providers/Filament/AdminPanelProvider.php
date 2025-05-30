@@ -9,6 +9,7 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
 use Filament\Pages;
+use Illuminate\Support\Facades\Auth;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -21,6 +22,8 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Symfony\Component\HttpKernel\Profiler\Profile;
 use Filament\Navigation\UserMenuItem;
+use Filament\Pages\Auth\EditProfile;
+
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
@@ -29,6 +32,8 @@ class AdminPanelProvider extends PanelProvider
             ->font('Roboto Flex')
             ->default()
             ->id('admin')
+            ->profile(EditProfile::class)
+            ->registration()
             ->path('admin')
             ->login()
              

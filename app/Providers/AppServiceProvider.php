@@ -1,37 +1,50 @@
 <?php
-
 namespace App\Providers;
 
-use App\Http\Livewire\NotasSolicitud;
-use Livewire\Livewire;
 use Illuminate\Support\ServiceProvider;
-use App\Models\PlanPractica;
-use App\Observers\PlanPracticaObserver;
+use Illuminate\Support\Facades\Auth;
+use Filament\Facades\Filament;
+
 class AppServiceProvider extends ServiceProvider
 {
-    
-
     public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
-    //public function boot(): void
-    //{
-        // Registra el componente Livewire
-        //Livewire::component('notas-solicitud', NotasSolicitud::class);
-        
-        // Elimina esto si no lo necesitas
-        // $this->registerObservers();
-   // }
-
-    /* Elimina este método si no lo usas
-    protected function registerObservers(): void
+    public function boot(): void
     {
-        // Configuración de observers si es necesaria
+        Filament::serving(function () {
+            // Mostrar nombre del usuario conectado (opcional)
+            Filament::registerRenderHook(
+                'panels::topbar.end',
+                function () {
+                    if (Auth::check()) {
+                        $user = Auth::user();
+                        return '<span class="text-sm text-blue-600 mr-4">'
+                            . e($user->name)
+                            . '</span>';
+                    }
+                    return '';
+                }
+            );
+
+            // Inyectar CSS inline para tablas compactas
+Filament::registerRenderHook(
+    'head.end',
+    fn () => '<style>
+        .fi-ta-table {
+            border-collapse: collapse; /* Quita espacio entre celdas */
+        }
+        .fi-ta-table tr > td,
+        .fi-ta-table tr > th {
+            padding-top: 0rem !important;
+            padding-bottom: 0rem !important;
+            line-height: 0 !important;
+            font-size: 8px !important;
+        }
+    </style>'
+);
+        });
     }
-    */
 }
