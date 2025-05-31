@@ -23,7 +23,10 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Symfony\Component\HttpKernel\Profiler\Profile;
 use Filament\Navigation\UserMenuItem;
 use Filament\Pages\Auth\EditProfile;
+use Filament\Pages\Tenancy\RegisterTenant;
 
+use Spatie\Permission\Models\Role;
+use App\Filament\Pages\Auth\Register;
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
@@ -33,7 +36,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->profile(EditProfile::class)
-            ->registration()
+            ->registration(Register::class)
             ->path('admin')
             ->login()
              
