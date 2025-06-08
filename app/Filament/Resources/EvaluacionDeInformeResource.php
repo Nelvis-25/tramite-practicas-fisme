@@ -20,8 +20,9 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class EvaluacionDeInformeResource extends Resource
 {
     protected static ?string $model = EvaluacionDeInforme::class;
-    protected static ?string $navigationGroup = 'Informe de practicas';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Informe de Prácticas';
+    protected static ?string $navigationLabel = 'Evaluar Informe de Prácticas';
+    protected static ?string $navigationIcon = 'heroicon-o-pencil';
     public static function getEloquentQuery(): Builder
 {
     $query = parent::getEloquentQuery();

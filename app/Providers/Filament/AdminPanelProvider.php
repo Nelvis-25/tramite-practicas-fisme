@@ -9,6 +9,7 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
 use Filament\Pages;
+
 use Illuminate\Support\Facades\Auth;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -27,26 +28,30 @@ use Filament\Pages\Tenancy\RegisterTenant;
 
 use Spatie\Permission\Models\Role;
 use App\Filament\Pages\Auth\Register;
+use Filament\Support\Assets\Css;
+
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
+        
             ->font('Roboto Flex')
             ->default()
+            ->viteTheme('resources/css/filament/admin/theme.css')
             ->id('admin')
             ->profile(EditProfile::class)
             ->registration(Register::class)
             ->path('admin')
             ->login()
-             
-            
+            ->profile()
             ->colors([
                 'primary' => Color::Blue,
 
             ])
-
-            ->profile()
+            
+            ->sidebarCollapsibleOnDesktop()
+            ->sidebarWidth('18rem')
             
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -59,7 +64,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+               
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -97,8 +102,11 @@ class AdminPanelProvider extends PanelProvider
                         'sm' => 2,
                     ]),
             ]);
+
+            
             
             
     }
+     
     
 }

@@ -19,7 +19,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class ComisionPermanenteResource extends Resource
 {
     protected static ?string $model = ComisionPermanente::class;
-    protected static ?string $navigationGroup = 'Comisiones permanentes';
+    protected static ?string $navigationGroup = 'Plan de Prácticas';
+    protected static ?string $navigationLabel = 'Comisión permanente';
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
 

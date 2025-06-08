@@ -223,9 +223,11 @@
           
             <!-- Contenido -->
             <div class="w-1/2 pl-10 text-left transform transition duration-500 hover:scale-105 opacity-{{ $observaciones ? '100' : '50' }}">
-              <div class="{{ $observaciones 
-                          ? 'bg-green-50 dark:bg-gray-800 p-4 rounded-xl shadow-md border-r-4 border-green-500 dark:border-green-400' 
-                          : 'bg-gray-100 dark:bg-gray-700 p-4 rounded-xl shadow-md border-r-4 border-gray-400 dark:border-gray-500' }}">
+              <div class="{{ $estadoPlan === 'Desaprobado'
+                  ? 'bg-red-50 dark:bg-gray-800 p-4 rounded-xl shadow-md border-r-4 border-red-500 dark:border-red-400'
+                  : ($observaciones 
+                      ? 'bg-green-50 dark:bg-gray-800 p-4 rounded-xl shadow-md border-r-4 border-green-500 dark:border-green-400' 
+                      : 'bg-gray-100 dark:bg-gray-700 p-4 rounded-xl shadow-md border-r-4 border-gray-400 dark:border-gray-500') }}">
           
                 <h3 class="text-lg font-bold mb-2 {{ $observaciones ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400' }}">
                   4. Fecha de sustentación
@@ -242,7 +244,9 @@
                     @if($estadoPlan === 'Observado')
                       y tiene observaciones por corregir.
                     @else
-                      y fue <strong>{{ $estadoPlan }}</strong> por la comisión permanente.
+                        y fue <strong class="{{ $estadoPlan === 'Desaprobado' ? 'text-red-600 dark:text-red-400' : '' }}">
+                            {{ $estadoPlan }}
+                        </strong> por la comisión permanente.
                     @endif
                   </p>
 

@@ -23,6 +23,7 @@ class SolicitudeResource extends Resource
 {
     protected static ?string $model = Solicitude::class;
     protected static ?string $navigationGroup = 'Plan de Prácticas';
+    protected static ?string $navigationLabel = 'Solicitudes de Plan';
     protected static ?string $navigationIcon = 'heroicon-o-document';
     public static function getEloquentQuery(): Builder
     {
@@ -181,7 +182,7 @@ class SolicitudeResource extends Resource
                 Tables\Columns\TextColumn::make('nombre')
                 ->label('Nombre del plan de prácticas')
                 ->extraAttributes([
-                    'style' => 'width: 550px; word-wrap: break-word; white-space: normal;text-align: justify;',
+                    'style' => 'width: 450px; word-wrap: break-word; white-space: normal;text-align: justify;',
                 ])
                     ->searchable(),
                 Tables\Columns\TextColumn::make('estudiante.nombre')
@@ -189,7 +190,11 @@ class SolicitudeResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('lineaInvestigacion.nombre')
                     ->numeric()
-                    ->sortable(),
+                    ->sortable()
+                    ->extraAttributes([
+                    'style' => 'width: 250px; word-wrap: break-word; white-space: normal;text-align: justify;',
+                ])
+                    ,
                 Tables\Columns\TextColumn::make('asesor.nombre')
                    ->label('Asesor')
                    ->numeric()
@@ -206,10 +211,12 @@ class SolicitudeResource extends Resource
                 Tables\Columns\TextColumn::make('fecha_inicio')
                     ->label('Inicio de la práctica')
                     ->date()
+                    ->alignCenter()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('fecha_fin')
                     ->label('Fin de la práctica')
                     ->date()
+                    ->alignCenter()
                     ->sortable(),
                 Tables\Columns\IconColumn::make('solicitud')
                     ->label('Solicitud al decano')

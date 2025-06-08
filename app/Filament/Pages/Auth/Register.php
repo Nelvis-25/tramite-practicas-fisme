@@ -26,7 +26,7 @@ class Register extends BaseRegister
 
             Notification::make()
                 ->title('¡Registro exitoso!')
-                ->body('Tu cuenta ha sido creada con éxito y se te ha asignado el rol de Estudiante.')
+                ->body('Tu cuenta ha sido creada con éxito.')
                 ->success()
                 ->send();
 
@@ -81,7 +81,7 @@ class Register extends BaseRegister
                     ->maxLength(255)
                     ->rules(['regex:/^\d{10}@untrm\.edu\.pe$/i', 'unique:users,email'])
                     ->validationMessages([
-                        'regex' => 'Ingrese su correo institucional con 10 dígitos seguido de @untrm.edu.pe (ej. 9635632365@untrm.edu.pe).',
+                        'regex' => 'Ingrese su correo institucional.',
                         'unique' => 'Este correo electrónico ya está registrado. Por favor, utiliza otro.',
                     ]),
 
@@ -89,11 +89,11 @@ class Register extends BaseRegister
                     ->label(__('filament-panels::pages/auth/register.form.password.label'))
                     ->password()
                     ->required()
-                    ->dehydrateStateUsing(fn (string $state): string => Hash::make($state))
+                    //->dehydrateStateUsing(fn (string $state): string => Hash::make($state))
                     ->autocomplete('new-password')
                     ->rules(['digits:10'])
                     ->validationMessages([
-                        'digits' => 'La contraseña debe ser su código institucional (exactamente 10 dígitos numéricos).',
+                        'digits' => 'La contraseña debe ser su código institucional.',
                     ]),
 
                 TextInput::make('password_confirmation')
@@ -101,7 +101,7 @@ class Register extends BaseRegister
                     ->password()
                     ->required()
                     ->maxLength(255)
-                    ->dehydrateStateUsing(fn (string $state): string => Hash::make($state))
+                   // ->dehydrateStateUsing(fn (string $state): string => Hash::make($state))
                     ->same('password')
                     ->autocomplete('new-password'),
             ]);

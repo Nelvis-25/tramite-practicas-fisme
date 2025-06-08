@@ -14,17 +14,17 @@ return new class extends Migration
         Schema::create('estudiantes', function (Blueprint $table) {
             $table->id();
             $table->string('nombre', 100);
-        $table->string('dni', 8)->unique();
-        $table->string('codigo', 10)->unique();
-        $table->string('tipo_estudiante')->nullable();
-        $table->string('ciclo')->nullable();
-        $table->string('facultad', 250);
-        $table->string('carrera', 120);
-        $table->string('telefono', 9)->unique();
-        $table->string('email', 125)->unique();
-        $table->string('direccion', 250)->nullable();
-        $table->boolean('estado')->default(true);
-        $table->unsignedBigInteger('user_id');
+            $table->string('dni', 8)->unique();
+            $table->string('codigo', 10)->unique();
+            $table->string('tipo_estudiante')->nullable();
+            $table->string('ciclo')->nullable();
+            $table->string('facultad', 250);
+            $table->string('carrera', 120);
+            $table->string('telefono', 9)->unique();
+            $table->string('email', 125)->unique();
+            $table->string('direccion', 250)->nullable();
+            $table->boolean('estado')->default(true);
+            $table->unsignedBigInteger('user_id');
         
         // Foreign keys
         

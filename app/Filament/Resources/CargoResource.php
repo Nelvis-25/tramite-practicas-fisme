@@ -16,8 +16,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class CargoResource extends Resource
 {
     protected static ?string $model = Cargo::class;
-    protected static ?string $navigationGroup = 'Estudiante';
-    protected static ?string $navigationLabel = 'Cargo del docente';
+    protected static ?string $navigationGroup = 'Registro académico';
+    protected static ?string $navigationLabel = 'Cargo del Docente';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function form(Form $form): Form

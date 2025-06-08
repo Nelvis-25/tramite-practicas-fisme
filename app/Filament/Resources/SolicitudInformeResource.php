@@ -26,7 +26,8 @@ use Illuminate\Support\Facades\DB;
 class SolicitudInformeResource extends Resource
 {
     protected static ?string $model = SolicitudInforme::class;
-    protected static ?string $navigationGroup = 'Informe de practicas';
+    protected static ?string $navigationGroup = 'Informe de Prácticas';
+    protected static ?string $navigationLabel = 'Solicitudes de Informe';
     protected static ?string $navigationIcon = 'heroicon-o-document';
     public static function getEloquentQuery(): Builder
     {
@@ -112,34 +113,38 @@ class SolicitudInformeResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('estudiante.nombre')
-                ->label('Nombre del práctica')
-                    ->numeric()
-                    ->sortable()
-                    ->searchable(),
                 Tables\Columns\TextColumn::make('practica.solicitude.nombre')
                     ->label('Título de práctica')
                     ->numeric()
                     ->sortable()
                     ->searchable()
                     ->extraAttributes([
-                        'style' => 'width: 380px; word-wrap: break-word; white-space: normal;text-align: justify;',
+                        'style' => 'width: 450px; word-wrap: break-word; white-space: normal;text-align: justify;',
                     ])
                     ,
-                Tables\Columns\TextColumn::make('informe')
-                ->label('Informe de práctica')
-                ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')
-                ->url(fn ($record) => $record->informe ? asset('storage/'.str_replace('storage/', '', $record->informe)) : null)
-                ->openUrlInNewTab()
-                ->icon('heroicon-o-document-text')
-                ->searchable(),
+                Tables\Columns\TextColumn::make('estudiante.nombre')
+                ->label('Nombre del práctica')
+                    ->numeric()
+                    ->sortable()
+                    ->searchable(),
+                
+                Tables\Columns\IconColumn::make('informe')
+                    ->label('Informe de práctica')
+                    ->icon('heroicon-o-document-text')
+                    ->alignCenter()
+                    ->color(fn ($record) => $record->informe ? 'primary' : 'danger')
+                    ->url(fn ($record) => $record->informe ? asset('storage/' . str_replace('storage/', '', $record->informe)) : null)
+                    ->openUrlInNewTab()
+                    ->tooltip(fn ($record) => $record->informe ? 'Ver plan de práctica' : 'Sin archivo')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('solicitud')
-                ->label('Solicitud al Decano')
-                ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')
-                ->url(fn ($record) => $record->solicitud ? asset('storage/'.str_replace('storage/', '', $record->solicitud)) : null)
-                ->openUrlInNewTab()
-                ->icon('heroicon-o-document-text')
-                ->searchable(),
+                    ->label('Solicitud al Decano')
+                     ->alignCenter()
+                    ->color(fn ($record) => $record->solicitud ? 'primary' : 'danger')
+                    ->url(fn ($record) => $record->solicitud ? asset('storage/' . str_replace('storage/', '', $record->solicitud)) : null)
+                    ->openUrlInNewTab()
+                    ->tooltip(fn ($record) => $record->solicitud? 'Ver solicitud al Decano' : 'Sin archivo')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('practica.solicitude.fecha_fin')
                     ->label('Fecha en que finalizó ')
                     ->numeric()
@@ -150,13 +155,15 @@ class SolicitudInformeResource extends Resource
                     Tables\Columns\TextColumn::make('estado')
                     ->label('Evaluación')
                     ->searchable()
-                    ->color(fn (string $state): string => match ($state) {
-                        'Aceptado' => 'success',
-                        'Rechazado' => 'danger',
-                        default => '',
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'Pendiente' => 'warning',             
+                        'Aceptado' => 'success',              
+                        'Rechazado' => 'danger',            
+                        'Comisión asignada' => 'primary',     
+                        default => 'gray',                   
                     })
-                    
-                    ->sortable(),
+                    ->formatStateUsing(fn ($state) => $state),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

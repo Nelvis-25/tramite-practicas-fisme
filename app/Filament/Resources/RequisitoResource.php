@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class RequisitoResource extends Resource
 {
     protected static ?string $model = Requisito::class;
-    protected static ?string $navigationGroup = 'Plan de Prácticas';
+    protected static ?string $navigationGroup = 'Registro académico';
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard';
 

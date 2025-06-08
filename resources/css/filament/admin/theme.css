@@ -1,0 +1,75 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@config 'tailwind.config.js';
+
+.fi-simple-layout {
+    background: 
+        linear-gradient(20deg, 
+            transparent 55%, 
+            rgba(255, 255, 255, 0.1) 55%,
+            rgba(255, 255, 255, 0.05) 70%  /* ¡Nuevo! Reflejo secundario */
+        ),
+        #1D4570;
+    position: relative;
+    overflow: hidden;  
+}
+.fi-simple-main {
+    background: #EEF4F7; 
+}
+
+.fi-input-wrp{
+    background: #EEF4F7; 
+}
+
+
+/* Scrollbar */
+.fi-sidebar-nav::-webkit-scrollbar {
+    display: none;
+}
+
+.fi-sidebar-nav {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/*sidevar */
+
+        aside.fi-sidebar {
+            @apply bg-gradient-to-b from-[#1D4570] to-slate-800 dark:bg-gradient-to-b dark:from-gray-800 dark:to-gray-900;
+
+            & .fi-sidebar-nav-groups {
+                @apply gap-y-3;
+            }
+
+            & .fi-sidebar-nav {
+                @apply px-4 pt-4;
+
+
+                & li.fi-sidebar-item {
+                    & .fi-sidebar-item-label, 
+                    & .fi-sidebar-item-icon {
+                        @apply text-gray-100;
+                    }
+                }
+
+                & li.fi-sidebar-item-active,
+                & li.fi-sidebar-item:hover {
+                    & .fi-sidebar-item-label, 
+                    & .fi-sidebar-item-icon {
+                        @apply text-blue-800 dark:text-blue-500;
+                    }
+                }
+                
+
+                & .fi-sidebar-group-button span, button
+                {
+                    @apply text-gray-400;
+                }
+            }
+        }
+
+    .fi-sidebar-item-label.filament-navigation-label {
+  text-transform: none !important;
+}
+
+

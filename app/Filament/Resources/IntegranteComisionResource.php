@@ -21,7 +21,8 @@ class IntegranteComisionResource extends Resource
 
     
     protected static ?string $model = IntegranteComision::class;
-    protected static ?string $navigationGroup = 'Comisiones permanentes';
+    protected static ?string $navigationGroup = 'Plan de Prácticas';
+    protected static ?string $navigationLabel = 'Integrantes de Comisión';
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
     
 

@@ -18,8 +18,9 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class InformeDePracticaResource extends Resource
 {
     protected static ?string $model = InformeDePractica::class;
-    protected static ?string $navigationGroup = 'Informe de practicas';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Informe de Prácticas';
+    protected static ?string $navigationLabel = 'Informe de Prácticas';
+    protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     public static function form(Form $form): Form
     {

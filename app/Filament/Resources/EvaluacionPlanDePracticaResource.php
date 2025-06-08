@@ -20,7 +20,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class EvaluacionPlanDePracticaResource extends Resource
 {
     protected static ?string $model = EvaluacionPlanDePractica::class;
-    protected static ?string $navigationGroup = 'Comisiones permanentes';
+    protected static ?string $navigationGroup = 'Plan de Prácticas';
+    protected static ?string $navigationLabel = 'Evaluar Plan de Prácticas';
     protected static ?string $navigationIcon = 'heroicon-o-pencil';
     public static function getEloquentQuery(): Builder
 {
@@ -163,6 +164,14 @@ class EvaluacionPlanDePracticaResource extends Resource
                     ])
                     ->numeric()
                     ->searchable(),
+                Tables\Columns\TextColumn::make('planPractica.solicitude.nombre')
+                    ->label('Nombre del plan de prácticas')
+                    ->extraAttributes([
+                        'style' => 'width: 320px; word-wrap: break-word; white-space: normal;text-align: justify;',
+                    ])
+                    ->numeric()
+                    ->searchable()
+                     ->toggleable(isToggledHiddenByDefault: true),
                     Tables\Columns\IconColumn::make('planPractica.solicitude.informe')
                      ->label('Plan de práctica')
                      ->icon('heroicon-o-document-text')
@@ -171,8 +180,15 @@ class EvaluacionPlanDePracticaResource extends Resource
                      ->url(fn ($record) => $record->planPractica->solicitude->informe? asset('storage/' . str_replace('storage/', '', $record->planPractica->solicitude->informe)) : null)
                      ->openUrlInNewTab()
                      ->tooltip(fn ($record) => $record->planPractica->solicitude->informe ? 'Ver plan de práctica' : 'Sin archivo'),
-                    
-                    Tables\Columns\TextColumn::make('integranteComision.docente.nombre')
+                 
+                 Tables\Columns\TextColumn::make('planPractica.fecha_sustentacion')
+                    ->label('Fecha programada')
+                    ->dateTime('d M Y H:i')
+                    ->alignCenter()
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                Tables\Columns\TextColumn::make('integranteComision.docente.nombre')
                     ->label('Integrante de Comisión')
                     ->formatStateUsing(fn ($state, $record) => $state . ' - ' . $record->integranteComision->cargo)
                     ->sortable(),
@@ -202,12 +218,20 @@ class EvaluacionPlanDePracticaResource extends Resource
                         $query->whereHas('observaciones', function (Builder $subQuery) use ($search) {
                             $subQuery->where('observacion', 'like', "%{$search}%");
                         });
-                    }),
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
              
                 Tables\Columns\TextColumn::make('estado')
                 ->label('Calificación')
                 ->searchable()
-                 ->color(fn ($state) => $state === 'Desaprobado' ? 'danger' : null)
+                 ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'Pendiente' => 'warning',             
+                        'Observado' => 'success',              
+                        'Desaprobado' => 'danger',            
+                        'Aprobado' => 'primary',     
+                        default => 'gray',                   
+                    })
                 ,
                  Tables\Columns\IconColumn::make('activo')
                     ->label('Estado')
@@ -228,6 +252,7 @@ class EvaluacionPlanDePracticaResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
                 
             ])
+            ->defaultSort('updated_at', 'desc')
             ->filters([
                 //
             ])
@@ -240,7 +265,7 @@ class EvaluacionPlanDePracticaResource extends Resource
                         ->modalIcon('heroicon-o-clipboard-document-check')
                         ->modalSubmitActionLabel('Guardar')
                         ->modalWidth('md')
-                        ->visible(fn ($record) => $record->estado !== 'Aprobado')
+                       // ->visible(fn ($record) => $record->estado !== 'Aprobado')
                         ->form([
                             Forms\Components\Radio::make('estado')
                                 ->label('Resultado de la Evaluación')
@@ -249,7 +274,7 @@ class EvaluacionPlanDePracticaResource extends Resource
                                     'Observado' => 'Observado',
                                     'Desaprobado' => 'Desaprobado',
                                 ])
-                                ->reactive() // ⚠️ clave para que se actualicen los campos dependientes
+                                ->reactive() 
                                 ->required()
                                 ->columnSpanFull()
                                  ->extraAttributes([
@@ -275,7 +300,8 @@ class EvaluacionPlanDePracticaResource extends Resource
                                 ->extraInputAttributes(['class' => 'mt-4']),
                         ])
                          ->action(function (EvaluacionPlanDePractica $record, array $data) {
-                        $decision = $data['estado'];
+                        
+                            $decision = $data['estado'];
 
                         if ($decision === 'Aprobado') {
                             $record->update([
@@ -319,7 +345,9 @@ class EvaluacionPlanDePracticaResource extends Resource
                                 ->info()
                                 ->send();
                         }
+                        
                     })
+                    
                     
                     ->modalSubmitActionLabel('Guardar')
                     ->modalCancelActionLabel('Cancelar'),

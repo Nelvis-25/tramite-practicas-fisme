@@ -287,6 +287,7 @@ public static function shouldRegisterNavigation(): bool
                 Action::make('actualizar_fechas')
                 ->label('Asignar fecha')
                 ->icon('heroicon-o-calendar')
+                ->visible(fn (PlanPractica $record) => $record->estado !== 'Aprobado')
                 ->modalHeading(' ')
                 ->requiresConfirmation()
                 ->modalIcon('heroicon-o-calendar-days')

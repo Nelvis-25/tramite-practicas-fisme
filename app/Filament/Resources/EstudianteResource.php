@@ -46,8 +46,8 @@ public static function canCreate(): bool
 }
 
     protected static ?string $model = Estudiante::class;
-    protected static ?string $navigationGroup = 'Estudiante';
-    protected static ?string $navigationLabel = 'Registro de estudiantes';
+    protected static ?string $navigationGroup = 'Registro académico';
+    protected static ?string $navigationLabel = 'Registro de Estudiantes';
     protected static ?string $navigationIcon = 'heroicon-o-users';
 
      
@@ -62,17 +62,17 @@ public static function canCreate(): bool
                     ->label('Nombre del estudiante')
                     ->required()
                     ->maxLength(100),
-                Forms\Components\TextInput::make('dni')
+               Forms\Components\TextInput::make('dni')
                     ->label('DNI')
-                    ->minLength(8)
                     ->unique(ignoreRecord: true)
                     ->maxLength(8)
-                    ->numeric(),
+                    ->rule('regex:/^[0-9]{1,8}$/'),
                 Forms\Components\TextInput::make('codigo')
                     ->label('Codigo del estudiante')
                     ->required()
                     ->unique(ignoreRecord: true)
-                    ->maxLength(10),
+                    ->maxLength(10)
+                    ->rule('regex:/^[0-9]{1,10}$/'),
                 Forms\Components\Select::make('tipo_estudiante')
                 ->label('Tipo de estudiante')
                 ->options([
@@ -82,12 +82,12 @@ public static function canCreate(): bool
                     ->required()
                     ->reactive() 
                     ,
-                    Forms\Components\TextInput::make('telefono')
+                Forms\Components\TextInput::make('telefono')
                     ->label('Teléfono')
                     ->tel()
-                    ->minLength(9)
-                    ->maxLength(9)
-                    ->numeric(),
+                    ->numeric()
+                    ->mask('999999999') 
+                    ->rule('digits:9'),
                 Forms\Components\Select::make('ciclo')
                    ->label('Ciclo de estudios')
                     ->options([
@@ -130,7 +130,8 @@ public static function canCreate(): bool
                     ->maxLength(250),
                 Forms\Components\Toggle::make('estado')
                     ->required()
-                    ->default(true),
+                    ->default(true)
+                     ->disabled(),
                     Forms\Components\Select::make('user_id')
                     ->relationship('user', 'name')
                     ->required()
@@ -139,6 +140,7 @@ public static function canCreate(): bool
                     ->preload()
                     ->default(fn () => $user?->hasRole('Estudiante') ? $user->id : null)
                     ->disabled(fn () => $user?->hasRole('Estudiante'))
+                    ->dehydrated(fn () => true)
                     ->live()
                     ->afterStateUpdated(function ($state, callable $set) {
                         $userEmail = \App\Models\User::find($state)?->email;
