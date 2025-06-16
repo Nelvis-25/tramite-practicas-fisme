@@ -24,8 +24,10 @@ class IntegranteComisionResource extends Resource
     protected static ?string $navigationGroup = 'Plan de Prácticas';
     protected static ?string $navigationLabel = 'Integrantes de Comisión';
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
-    
-
+    protected static ?string $label = 'integrates';
+    protected static ?string $pluralLabel = 'Integrantes de Comisión';
+    protected static ?int $navigationSort = 5;
+ 
 public static function form(Form $form): Form
 {
     return $form

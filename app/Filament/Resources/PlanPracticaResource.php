@@ -29,6 +29,8 @@ class PlanPracticaResource extends Resource
     protected static ?string $pluralLabel = 'Plan de Prácticas';
     protected static ?string $navigationGroup = 'Plan de Prácticas';
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static ?int $navigationSort = 2;
+    
     /** @var User $user */
 public static function shouldRegisterNavigation(): bool
 {
@@ -125,7 +127,7 @@ public static function shouldRegisterNavigation(): bool
                     ->openUrlInNewTab()
                     ->tooltip(fn ($record) => $record->solicitude && $record->solicitude->informe ? 'Ver plan de práctica' : 'Sin archivo'
                     )
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('comisionPermanente.nombre')
                     ->searchable()
                     ->numeric()
@@ -168,7 +170,8 @@ public static function shouldRegisterNavigation(): bool
                     ->searchable()
                      ->alignCenter()
                     ->date()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('fecha_resolucion')
                     ->label('Fecha de resolución')
                      ->alignCenter()
@@ -176,6 +179,16 @@ public static function shouldRegisterNavigation(): bool
                     ->date()
                     ->sortable()
                      ->toggleable(isToggledHiddenByDefault: false),
+                
+                Tables\Columns\IconColumn::make('resolucion')
+                    ->label('Resolución')
+                    ->icon('heroicon-o-document-text')
+                    ->alignCenter()
+                    ->color(fn ($record) => $record->resolucion ? 'primary' : 'danger')
+                    ->url(fn ($record) => $record->resolucion ? asset('storage/' . str_replace('storage/', '', $record->resolucion)) : null)
+                    ->openUrlInNewTab()
+                    ->tooltip(fn ($record) => $record->resolucion ? 'Ver resolución' : 'Sin archivo')
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('observaciones')
                     ->label('Presentación')
                      
@@ -287,11 +300,10 @@ public static function shouldRegisterNavigation(): bool
                 Action::make('actualizar_fechas')
                 ->label('Asignar fecha')
                 ->icon('heroicon-o-calendar')
-                ->visible(fn (PlanPractica $record) => $record->estado !== 'Aprobado')
                 ->modalHeading(' ')
                 ->requiresConfirmation()
                 ->modalIcon('heroicon-o-calendar-days')
-                ->modalHeading('ASIGNAR FECHAS')
+                ->modalHeading(fn ($record) =>'ASIGNAR FECHAS DE SUSTENTACIÓN A ' .strtoupper(optional($record->solicitude->estudiante)->nombre))
                 ->modalSubmitActionLabel('Guardar')
                 ->modalWidth('md')
                 ->form([
@@ -339,13 +351,15 @@ public static function shouldRegisterNavigation(): bool
                         
                 })
                 ->modalSubmitActionLabel('Guardar')
-                ->modalCancelActionLabel('Cancelar'),
+                ->modalCancelActionLabel('Cancelar')
+                ->visible(fn (PlanPractica $record) => $record->estado !== 'Aprobado')
+                ,
                 
                  Action::make('asignar_resolucion')
                     ->label('Asignar Resolución')
                     ->icon('heroicon-o-document-check')
                     ->modalHeading(' ')
-                    ->modalHeading('ASIGNAR RESOLUCIÓN')
+                     ->modalHeading(fn ($record) =>'ASIGNANDO RESOLUCIÓN A ' .strtoupper(optional($record->solicitude->estudiante)->nombre))
                     ->requiresConfirmation()
                     ->modalIcon('heroicon-o-clipboard-document-check')
                     ->modalSubmitActionLabel('Guardar')

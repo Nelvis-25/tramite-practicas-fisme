@@ -18,7 +18,8 @@ class DocenteResource extends Resource
     protected static ?string $model = Docente::class;
     protected static ?string $navigationGroup = 'Registro académico';
     protected static ?string $navigationLabel = 'Registro de Docentes';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {

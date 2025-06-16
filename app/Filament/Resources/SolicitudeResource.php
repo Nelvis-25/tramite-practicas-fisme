@@ -25,9 +25,11 @@ class SolicitudeResource extends Resource
     protected static ?string $navigationGroup = 'Plan de Prácticas';
     protected static ?string $navigationLabel = 'Solicitudes de Plan';
     protected static ?string $navigationIcon = 'heroicon-o-document';
+    protected static ?int $navigationSort = 1;
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
+        
     
         /** @var User $user */
         $user = auth()->user();
@@ -48,6 +50,11 @@ class SolicitudeResource extends Resource
    public static function canCreate(): bool
     {
         $user = auth()->user();
+
+            if (!static::can('create')) {
+                return false;
+            }
+
             /** @var User $user */
         if ($user && $user->hasRole('Estudiante')) {
             $estudiante = $user->estudiante;
@@ -298,7 +305,7 @@ class SolicitudeResource extends Resource
                     ->icon('heroicon-o-check-circle')  
                     ->color('success')
                     ->modalHeading(' ')
-                    ->modalHeading('VALIDACIÓN DE LA SOLICITUD')
+                    ->modalHeading(fn ($record) =>'VALIDANDO SOLICITUD DE '.strtoupper(optional($record->estudiante)->nombre))
                     ->requiresConfirmation()
                     ->modalIcon('heroicon-o-clipboard-document-check')
                     ->modalSubmitActionLabel('Guardar')
@@ -400,10 +407,10 @@ class SolicitudeResource extends Resource
                         ->first();
 
                     if (!$comision) {
-                        return 'NO SE ENCONTRO UNA COMISION ACTIVA';
+                        return 'NO SE ENCONTRO UNA COMISION ACTIVA, VERIFIQUE EN EL PANEL DE COMISIONES';
                     }
 
-                    return 'SE ASIGNARA LA  "' . $comision->nombre . '" A ESTA SOLICITUD';
+                    return 'SE ASIGNARA LA  "' . $comision->nombre . '" A LA SOLICITUD DEL ESTUDIANTE ' . strtoupper(optional($record->estudiante)->nombre);
                 })
                 ->modalDescription('¿Desea asignar esta comisión ?')
                 ->action(function ($record) {
@@ -466,7 +473,7 @@ class SolicitudeResource extends Resource
                             // Solo admin puede ver en esos estados
                             return $user->hasRole('Admin');
                         }
-                        return $user->hasAnyRole(['Admin', 'Director ']);
+                        return $user->hasAnyRole(['Admin', 'Director de escuela']);
                     })
                 ,
 

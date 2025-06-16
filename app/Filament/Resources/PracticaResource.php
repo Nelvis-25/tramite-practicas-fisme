@@ -18,7 +18,10 @@ class PracticaResource extends Resource
 {
     protected static ?string $model = Practica::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+    protected static ?string $navigationLabel = 'Prácticas';
+    protected static ?string $label = 'práctica';
+    protected static ?string $pluralLabel = 'Prácticas';
 
     public static function form(Form $form): Form
     {
@@ -60,8 +63,13 @@ class PracticaResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('estudiante.tipo_estudiante')
+                    ->label('Est/Egre')
+                    ->numeric()
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('estudiante.nombre')
-                    ->label('Nombre del práctica')
+                    ->label('Nombre del estudiante') 
                     ->numeric()
                     ->sortable()
                     ->searchable(),
@@ -71,47 +79,59 @@ class PracticaResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('solicitude.nombre')
-                    ->label('titulo de práctica')
+                    ->label('Titulo de práctica')
                     ->numeric()
                     ->sortable()
                     ->extraAttributes([
-                        'style' => 'width: 300px; word-wrap: break-word; white-space: normal;text-align: justify;',
+                        'style' => 'width: 400px; word-wrap: break-word; white-space: normal;text-align: justify;',
                     ])
                     ->searchable(),
-                    Tables\Columns\TextColumn::make('solicitude.informe')
-                    ->label('Plan de práctica')
+                   // Tables\Columns\TextColumn::make('solicitude.informe')
+                    //->label('Plan de práctica')
                     
-                    ->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')  // Usar la misma lógica para mostrar el nombre del archivo
-                    ->url(function ($record) {
-                        if (!$record->solicitude || !$record->solicitude->informe) return null;
-                        return asset('storage/'.str_replace('storage/', '', $record->solicitude->informe));  // Asegurarte de acceder correctamente a "informe" en el objeto "solicitude"
-                    }),
-                    Tables\Columns\TextColumn::make('planPractica.estado')
+                    //->formatStateUsing(fn ($state) => $state ? basename($state) : 'Sin archivo')  // Usar la misma lógica para mostrar el nombre del archivo
+                   // ->url(function ($record) {
+                     //   if (!$record->solicitude || !$record->solicitude->informe) return null;
+                     //   return asset('storage/'.str_replace('storage/', '', $record->solicitude->informe));  // Asegurarte de acceder correctamente a "informe" en el objeto "solicitude"
+                   // }),
+                Tables\Columns\TextColumn::make('planPractica.estado')
                     ->label('plan practica')
                     ->numeric()
-                    ->sortable(),    
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),   
                 Tables\Columns\TextColumn::make('planPractica.comisionPermanente.nombre')
                     ->label('Comision permanente')
                     ->numeric()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 
                Tables\Columns\TextColumn::make('solicitude.fecha_inicio')
-               ->label(  'Inicio de desarrollo'  )
-                ->numeric()
-                ->sortable(), 
+                    ->label(  'Inicio de Práctica'  )
+                    ->numeric()
+                    ->alignCenter()
+                    ->searchable()
+                    ->sortable(), 
                 Tables\Columns\TextColumn::make('solicitude.fecha_fin')
-                ->label(  'fin de desarrollo'  )
-                ->numeric()
-                ->sortable(),    
+                    ->label(  'Fin de Práctica'  )
+                    ->numeric()
+                    ->alignCenter()
+                    ->sortable(),    
                 Tables\Columns\TextColumn::make('estado')
                     ->searchable()
-                     ->color(fn ($state) => $state === 'Desaprobado' ? 'danger' : null),
+                    ->alignCenter()
+                     ->badge()
+                    ->color(fn ($state) => match ($state) {
+                            'Pendiente' => 'warning',
+                            'Finalizado' => 'primary',
+                            default => 'warning',
+                        }),
                 Tables\Columns\IconColumn::make('activo')
-                    ->label('Activo')
+                    ->label('')
                     ->boolean()
-                    ->trueColor('primary')   
-                    ->falseColor('success')   
-                    ->tooltip(fn ($record) => $record->activo ? 'Finalizado con éxito' : 'En proceso'),       
+                    ->alignCenter()
+                    ->trueColor('success')   
+                    ->falseColor('primary')   
+                    ->tooltip(fn ($record) => $record->activo ? 'En proceso' : 'Finalizado con éxito'),       
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -121,6 +141,7 @@ class PracticaResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])

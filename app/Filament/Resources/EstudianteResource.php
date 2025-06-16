@@ -49,6 +49,9 @@ public static function canCreate(): bool
     protected static ?string $navigationGroup = 'Registro académico';
     protected static ?string $navigationLabel = 'Registro de Estudiantes';
     protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static ?string $label = 'estudiante';
+    protected static ?string $pluralLabel = 'Estudiantes';
+    protected static ?int $navigationSort = 1;
 
      
     public static function form(Form $form): Form

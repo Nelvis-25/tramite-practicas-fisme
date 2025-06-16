@@ -19,7 +19,7 @@ class JuradoDeInformeResource extends Resource
     protected static ?string $navigationGroup = 'Informe de Prácticas';
     protected static ?string $navigationLabel = 'Jurados de Informe';
     protected static ?string $navigationIcon = 'heroicon-o-users';
-
+    protected static ?int $navigationSort = 4;
     public static function form(Form $form): Form
     {
         return $form
@@ -90,6 +90,7 @@ class JuradoDeInformeResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])

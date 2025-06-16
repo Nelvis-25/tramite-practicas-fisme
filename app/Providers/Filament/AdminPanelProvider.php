@@ -28,6 +28,7 @@ use Filament\Pages\Tenancy\RegisterTenant;
 
 use Spatie\Permission\Models\Role;
 use App\Filament\Pages\Auth\Register;
+use Filament\Navigation\NavigationGroup;
 use Filament\Support\Assets\Css;
 
 class AdminPanelProvider extends PanelProvider
@@ -40,9 +41,16 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->id('admin')
+            ->navigationGroups([
+            NavigationGroup::make()->label('Registro académico'),     
+            NavigationGroup::make()->label('Plan de Prácticas'),       
+            NavigationGroup::make()->label('Informe de Prácticas'),    
+            NavigationGroup::make()->label('Gestión de Accesos'),       
+            ])
             ->profile(EditProfile::class)
             ->registration(Register::class)
             ->path('admin')
+            ->databaseNotifications()
             ->login()
             ->profile()
             ->colors([

@@ -21,6 +21,7 @@ class InformeDePracticaResource extends Resource
     protected static ?string $navigationGroup = 'Informe de Prácticas';
     protected static ?string $navigationLabel = 'Informe de Prácticas';
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
@@ -90,8 +91,8 @@ class InformeDePracticaResource extends Resource
                     )
                     ->openUrlInNewTab()
                     ->tooltip(fn ($record) => $record->solicitudInforme && $record->solicitudInforme->informe ? 'Ver informe' : 'Sin archivo')
-                    ->toggleable(isToggledHiddenByDefault: false),              
-    
+                    ->toggleable(isToggledHiddenByDefault: true),              
+                    
                   Tables\Columns\TextColumn::make('jurados')
                     ->label('Jurados')
                     ->searchable()
@@ -127,7 +128,15 @@ class InformeDePracticaResource extends Resource
                     ->date()
                     ->sortable()
                      ->toggleable(isToggledHiddenByDefault: false),
-                
+                Tables\Columns\IconColumn::make('resolucion')
+                    ->label('Resolución')
+                    ->icon('heroicon-o-document-text')
+                    ->alignCenter()
+                    ->color(fn ($record) => $record->resolucion ? 'primary' : 'danger')
+                    ->url(fn ($record) => $record->resolucion ? asset('storage/' . str_replace('storage/', '', $record->resolucion)) : null)
+                    ->openUrlInNewTab()
+                    ->tooltip(fn ($record) => $record->resolucion ? 'Ver resolución' : 'Sin archivo')
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('observaciones')
                     ->label('Sustentación')
                     ->wrap()
@@ -199,11 +208,11 @@ class InformeDePracticaResource extends Resource
                         if ($record->fecha_sustentacion) {
                             $dias = \Carbon\Carbon::parse($record->created_at)
                                 ->diffInWeekdays($record->fecha_sustentacion);
-                            return ($dias <= 15) ? 'success' : 'danger';
+                            return ($dias <= 15) ? 'primary' : 'success';
                         }
                 
                         $fechaLimite = \Carbon\Carbon::parse($record->created_at)->addWeekdays(15);
-                        return now()->gt($fechaLimite) ? 'danger' : 'success';
+                        return now()->gt($fechaLimite) ? 'primary' : 'success';
                     })
                     ->tooltip(function ($record) {
                         if (!$record->created_at) {
@@ -232,6 +241,7 @@ class InformeDePracticaResource extends Resource
                      ->toggleable(isToggledHiddenByDefault: false),
                 
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])
@@ -292,7 +302,8 @@ class InformeDePracticaResource extends Resource
                         
                 })
                 ->modalSubmitActionLabel('Guardar')
-                ->modalCancelActionLabel('Cancelar'),
+                ->modalCancelActionLabel('Cancelar')
+                ->visible(fn (InformeDePractica $record) => $record->estado !== 'Aprobado'),
                 
                 Tables\Actions\Action::make('asignar_resolucion')
                     ->label('Asignar Resolución')
@@ -342,7 +353,13 @@ class InformeDePracticaResource extends Resource
                         }
                     })
                     ->modalSubmitActionLabel('Guardar')
-                    ->modalCancelActionLabel('Cancelar'),
+                    ->modalCancelActionLabel('Cancelar')
+                     ->visible(function ($record) {
+                        $user = auth()->user();
+                      /** @var User $user */
+
+                        return $user->hasAnyRole(['Admin', 'Secretaria']);
+                    }),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
                 

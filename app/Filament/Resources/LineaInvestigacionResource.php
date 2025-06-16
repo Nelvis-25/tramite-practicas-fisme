@@ -19,6 +19,7 @@ class LineaInvestigacionResource extends Resource
     protected static ?string $navigationGroup = 'Registro académico';
     protected static ?string $navigationLabel = 'Linea de Investigación';
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
+    protected static ?int $navigationSort = 5;
 
     public static function form(Form $form): Form
     {
@@ -39,7 +40,10 @@ class LineaInvestigacionResource extends Resource
                 Tables\Columns\TextColumn::make('nombre')
                     ->searchable(),
                 Tables\Columns\IconColumn::make('estado')
-                    ->boolean(),
+                    ->label('Estado')
+                    ->boolean()
+                    ->trueColor('primary')  
+                    ->falseColor('danger'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

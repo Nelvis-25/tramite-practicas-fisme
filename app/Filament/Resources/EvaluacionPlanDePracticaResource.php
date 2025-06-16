@@ -23,6 +23,7 @@ class EvaluacionPlanDePracticaResource extends Resource
     protected static ?string $navigationGroup = 'Plan de Prácticas';
     protected static ?string $navigationLabel = 'Evaluar Plan de Prácticas';
     protected static ?string $navigationIcon = 'heroicon-o-pencil';
+    protected static ?int $navigationSort = 3;
     public static function getEloquentQuery(): Builder
 {
     $query = parent::getEloquentQuery();
@@ -260,7 +261,7 @@ class EvaluacionPlanDePracticaResource extends Resource
                      Action::make('evaluar')
                         ->label('Evaluar ')
                         ->icon('heroicon-o-document-check')
-                        ->modalHeading('EVALUACIÓN DEL PLAN DE PRÁCTICA')
+                         ->modalHeading(fn ($record) => 'EVALUANDO EL PLAN DE PRÁCTICA DE ' . strtoupper(optional($record->planPractica?->solicitude?->estudiante)->nombre))
                         ->requiresConfirmation()
                         ->modalIcon('heroicon-o-clipboard-document-check')
                         ->modalSubmitActionLabel('Guardar')

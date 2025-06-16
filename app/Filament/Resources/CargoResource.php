@@ -18,7 +18,8 @@ class CargoResource extends Resource
     protected static ?string $model = Cargo::class;
     protected static ?string $navigationGroup = 'Registro académico';
     protected static ?string $navigationLabel = 'Cargo del Docente';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-briefcase';
+    protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form
     {
@@ -39,8 +40,11 @@ class CargoResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('nombre')
                     ->searchable(),
-                Tables\Columns\IconColumn::make('estado')
-                    ->boolean(),
+               Tables\Columns\IconColumn::make('estado')
+                    ->label('Estado')
+                    ->boolean()
+                    ->trueColor('primary')  
+                    ->falseColor('danger'),
                     
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -51,11 +55,13 @@ class CargoResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

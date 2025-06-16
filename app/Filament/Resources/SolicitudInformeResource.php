@@ -29,6 +29,7 @@ class SolicitudInformeResource extends Resource
     protected static ?string $navigationGroup = 'Informe de Prácticas';
     protected static ?string $navigationLabel = 'Solicitudes de Informe';
     protected static ?string $navigationIcon = 'heroicon-o-document';
+    protected static ?int $navigationSort = 1;
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
@@ -49,6 +50,32 @@ class SolicitudInformeResource extends Resource
     
         return $query;
     }
+
+public static function canCreate(): bool
+{
+
+    $user = auth()->user();
+     if (!static::can('create')) {
+                return false;
+            }
+    
+     /** @var User $user */
+    if (!$user || !$user->hasRole('Estudiante')) {
+        return true;
+    }
+
+    $estudiante = $user->estudiante;
+    if (!$estudiante) {
+        return false;
+    }
+
+    if ($estudiante->solicitudInformes()->count() === 0) {
+        return true;
+    }
+    return $estudiante->solicitudInformes()
+        ->whereHas('informedePractica', fn($q) => $q->where('estado', 'Desaprobado'))
+        ->exists();
+}
     public static function form(Form $form): Form
     {
         return $form
@@ -60,17 +87,29 @@ class SolicitudInformeResource extends Resource
                     ->required()
                    ,
                    Forms\Components\Select::make('practica_id')
-                   ->label('Título de práctica')
-                   ->options(function () {
-                       return \App\Models\Practica::with('solicitude') // Cargamos solicitud
-                           ->get()
-                           ->mapWithKeys(function ($practica) {
-                               return [$practica->id => optional($practica->solicitude)->nombre];
-                           });
-                   })
-                   ->searchable()
-                   ->required()
-    ,
+                    ->label('Título de práctica')
+                    ->options(function (Forms\Get $get) {
+                        $estudianteId = $get('estudiante_id');
+                        
+                        if (!$estudianteId) {
+                            return [];
+                        }
+
+                        return \App\Models\Practica::with('solicitude')
+                            ->whereHas('solicitude', function($query) use ($estudianteId) {
+                                $query->where('estudiante_id', $estudianteId);
+                            })
+                            ->latest() // Ordena por el más reciente primero
+                            ->get()
+                            ->mapWithKeys(function ($practica) {
+                                return [$practica->id => optional($practica->solicitude)->nombre];
+                            });
+                    })
+                    ->searchable()
+                    ->required()
+                    ->live() 
+                ,
+                    
 
                 Forms\Components\FileUpload::make('informe')
                 ->label('Informe de práctica :pdf')
@@ -105,7 +144,7 @@ class SolicitudInformeResource extends Resource
                 ])
                 ->default('Pendiente')
                 ->required()
-                //->disabled(true)
+                ->disabled(true)
             ]);
     }
 
@@ -160,7 +199,7 @@ class SolicitudInformeResource extends Resource
                         'Pendiente' => 'warning',             
                         'Aceptado' => 'success',              
                         'Rechazado' => 'danger',            
-                        'Comisión asignada' => 'primary',     
+                        'Jurado asignado' => 'primary',     
                         default => 'gray',                   
                     })
                     ->formatStateUsing(fn ($state) => $state),
@@ -173,6 +212,7 @@ class SolicitudInformeResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])
@@ -246,7 +286,18 @@ class SolicitudInformeResource extends Resource
                     })
                     
                     ->modalSubmitActionLabel('Guardar')
-                    ->modalCancelActionLabel('Cancelar'),
+                    ->modalCancelActionLabel('Cancelar')
+                    ->visible(function ($record) {
+                        $user = auth()->user();
+                      /** @var User $user */
+
+                    if (in_array($record->estado, ['Comisión asignada'])) {
+                            // Solo admin puede ver en esos estados
+                            return $user->hasRole('Admin');
+                        }
+                        return $user->hasAnyRole(['Admin', 'Secretaria']);
+                    })
+                ,
 
                 Tables\Actions\Action::make('asignar_jurados')
                     ->label('Asignar Jurados')
@@ -351,7 +402,17 @@ class SolicitudInformeResource extends Resource
                                 ->send();
                         })
 
-                      ->modalWidth('4xl'),
+                      ->modalWidth('4xl')
+                      ->visible(function ($record) {
+                        $user = auth()->user();
+                      /** @var User $user */
+
+                        if (in_array($record->estado, ['Jurado asignado'])) {
+                            // Solo admin puede ver en esos estados
+                            return $user->hasRole('Admin');
+                        }
+                        return $user->hasAnyRole(['Admin', 'Director de escuela']);
+                    }),
                 Tables\Actions\Action::make('notas')
                 ->label('')
                 ->icon('heroicon-o-chat-bubble-left')

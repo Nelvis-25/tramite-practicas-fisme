@@ -23,6 +23,7 @@ class EvaluacionDeInformeResource extends Resource
     protected static ?string $navigationGroup = 'Informe de Prácticas';
     protected static ?string $navigationLabel = 'Evaluar Informe de Prácticas';
     protected static ?string $navigationIcon = 'heroicon-o-pencil';
+    protected static ?int $navigationSort = 3;
     public static function getEloquentQuery(): Builder
 {
     $query = parent::getEloquentQuery();
@@ -287,6 +288,7 @@ class EvaluacionDeInformeResource extends Resource
                 
                 
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])

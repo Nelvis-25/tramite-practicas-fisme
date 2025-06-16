@@ -23,7 +23,9 @@ class ComisionPermanenteResource extends Resource
     protected static ?string $navigationLabel = 'Comisión permanente';
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
-
+    protected static ?string $label = 'comisión';
+    protected static ?string $pluralLabel = 'Comisión permanente';
+    protected static ?int $navigationSort = 4;
     public static function form(Form $form): Form
 {
     return $form
@@ -97,6 +99,7 @@ class ComisionPermanenteResource extends Resource
                     ->date()
                     ->sortable(),
                 Tables\Columns\IconColumn::make('estado')
+                ->trueColor('primary')
                     ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -107,6 +110,7 @@ class ComisionPermanenteResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])
