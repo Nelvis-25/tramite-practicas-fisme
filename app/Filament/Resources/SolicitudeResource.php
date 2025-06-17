@@ -108,14 +108,18 @@ class SolicitudeResource extends Resource
                    // ->required()
                    // ->searchable(),
                  Forms\Components\Select::make('asesor_id')
-                    ->label('Selecione su asesor')
+                    ->label('Seleccione su asesor')
                     ->relationship('asesor', 'nombre', modifyQueryUsing: function ($query) {
-                     return $query->withCount(['practicas as practicas_activas_count' => function ($q) {
-                     $q->where('activo', true);
-                     }])->having('practicas_activas_count', '<', 5);
-                        })
-                        ->searchable()
-                        ->required(),
+                        return $query->withCount([
+                            'solicitude as solicitudes_en_proceso_count' => function ($q) {
+                                $q->where('activo', true)
+                                ->whereIn('estado', ['Aceptado', 'Comisión asignada']);
+                            }
+                        ])
+                        ->having('solicitudes_en_proceso_count', '<', 5);
+                    })
+                    ->searchable()
+                    ->required(),
                 Forms\Components\DatePicker::make('fecha_inicio')
                     ->label('Fecha de inicio de su práctica')
                     ->required(),

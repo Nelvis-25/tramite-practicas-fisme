@@ -77,6 +77,7 @@ class EvaluacionPlanDePractica extends Model
         } else {
             $nuevoEstado = 'Aprobado';
         }
+        
         $plan->updateQuietly([
             'estado' => $nuevoEstado,
             'observaciones' => 'Sustentado',
@@ -85,8 +86,10 @@ class EvaluacionPlanDePractica extends Model
         $plan->evaluaciones()
             ->where('estado', 'Pendiente')
             ->delete();
-    
-    
+
+        if ($nuevoEstado === 'Desaprobado') {
+        $plan->solicitude->updateQuietly(['activo' => false]);
+          }
     
             if ($nuevoEstado === 'Aprobado') {
                 $existePractica = \App\Models\Practica::where('plan_practica_id', $plan->id)->first();
@@ -104,7 +107,7 @@ class EvaluacionPlanDePractica extends Model
     
     
     
-        }
+    }
 
 
 

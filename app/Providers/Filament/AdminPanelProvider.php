@@ -71,7 +71,11 @@ class AdminPanelProvider extends PanelProvider
             
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
+                //Widgets\AccountWidget::class,
+                \App\Filament\Widgets\PracticasTotal::class,
+                \App\Filament\Widgets\PracticasPastel::class,
+                \App\Filament\Widgets\Asesorlista::class,
+
                
             ])
             ->middleware([

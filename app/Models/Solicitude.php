@@ -24,6 +24,7 @@ class Solicitude extends Model
         'carta_presentacion',
         'comprobante_pago',
         'estado',
+        'activo',
     ];
     protected $attributes = [
         'estado' => 'Pendiente',
@@ -39,7 +40,7 @@ class Solicitude extends Model
     }
     public function asesor(): BelongsTo
     {
-        return $this->belongsTo(Docente::class);
+        return $this->belongsTo(Docente::class, 'asesor_id');
     }
 
     public function requisito(): BelongsTo

@@ -47,7 +47,7 @@ class Docente extends Model
     
     public function solicitude()
 {
-    return $this->hasMany(Solicitude::class);
+    return $this->hasMany(Solicitude::class, 'asesor_id');
 }
     public function practicas()
 {

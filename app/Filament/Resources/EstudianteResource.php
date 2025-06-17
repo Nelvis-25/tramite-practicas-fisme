@@ -65,6 +65,14 @@ public static function canCreate(): bool
                     ->label('Nombre del estudiante')
                     ->required()
                     ->maxLength(100),
+                Forms\Components\Select::make('sexo')
+                    ->label('Sexo')
+                    ->required()
+                    ->options([
+                        'M' => 'M',
+                        'F' => 'F',
+                    ])
+                    ->native(false),
                Forms\Components\TextInput::make('dni')
                     ->label('DNI')
                     ->unique(ignoreRecord: true)
@@ -88,6 +96,7 @@ public static function canCreate(): bool
                 Forms\Components\TextInput::make('telefono')
                     ->label('Teléfono')
                     ->tel()
+                    ->required()
                     ->numeric()
                     ->mask('999999999') 
                     ->rule('digits:9'),
@@ -131,10 +140,6 @@ public static function canCreate(): bool
                 
                 Forms\Components\TextInput::make('direccion')
                     ->maxLength(250),
-                Forms\Components\Toggle::make('estado')
-                    ->required()
-                    ->default(true)
-                     ->disabled(),
                     Forms\Components\Select::make('user_id')
                     ->relationship('user', 'name')
                     ->required()
@@ -149,6 +154,10 @@ public static function canCreate(): bool
                         $userEmail = \App\Models\User::find($state)?->email;
                         $set('email', $userEmail);
                     }),
+                                    Forms\Components\Toggle::make('estado')
+                    ->required()
+                    ->default(true)
+                     ->disabled(),
                 
             ]);
     }
