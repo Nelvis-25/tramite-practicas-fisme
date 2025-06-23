@@ -597,21 +597,22 @@
     </div>
       
       <!-- Footer con información adicional -->
-      <div class="mt-16 pt-8 border-t border-gray-200 dark:border-gray-700">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div class="text-sm text-gray-500 dark:text-gray-400">
-            <p>Si tienes alguna duda, contacta a la <span class="font-medium text-blue-600 dark:text-blue-400">Oficina de Prácticas</span>.</p>
-          </div>
-          <div class="flex space-x-4">
-            <button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-1">
-              Descargar PDF
-            </button>
-            <button class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-white font-medium rounded-lg transition duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-1">
-              Ver detalles
-            </button>
-          </div>
-        </div>
-      </div>
+        <div class="text-sm text-gray-500 dark:text-gray-400">
+      @if(!empty($nombreSecretaria) && !empty($telefonoSecretaria))
+          <p>
+              Secretaria responsable: 
+              <span class="font-semibold">{{ $nombreSecretaria }}</span> — 
+              <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $telefonoSecretaria) }}" target="_blank" class="text-blue-600 hover:underline">
+                  {{ $telefonoSecretaria }}
+              </a>
+          </p>
+      @else
+          <p>
+              Si tienes alguna duda, visítanos en la
+              <span class="font-medium text-blue-600 dark:text-blue-400"> Oficina Fisme UNTRM</span>.
+          </p>
+      @endif
+</div>
       
       <!-- Modo oscuro toggle -->
       <div class="mt-6 text-center">

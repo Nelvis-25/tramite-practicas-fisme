@@ -56,43 +56,43 @@ protected static function booted()
         public function actualizarEstadoPlanPadre()
         {
             $plan = $this->informeDePractica;
-
-            // Paso 1: obtener la ronda más alta (última)
             $ultimaRonda = $plan->evaluaciones()->max('ronda');
-
-            // Paso 2: obtener evaluaciones de esa última ronda con estado Evaluado
             $evaluacionesRonda = $plan->evaluaciones()
                 ->where('ronda', $ultimaRonda)
                 ->where('estado', 'Evaluado')
                 ->get();
 
             if ($evaluacionesRonda->count() < 3) {
-                return; // Aún no hay suficientes evaluaciones para proceder
+                return; 
             }
 
-            // Paso 3: eliminar las pendientes de esa ronda
             $plan->evaluaciones()
                 ->where('ronda', $ultimaRonda)
                 ->where('estado', 'Pendiente')
                 ->delete();
-
-            // Paso 4: calcular promedio de las notas de esa ronda
             $promedio = $evaluacionesRonda->avg('nota');
             $promedioRedondeado = round($promedio);
-
-            // Paso 5: decidir nuevo estado según promedio
             $nuevoEstado = ($promedioRedondeado < 12) ? 'Desaprobado' : 'Aprobado';
 
-            // Paso 6: actualizar informe de práctica
             $plan->updateQuietly([
                 'estado' => $nuevoEstado,
                 'observaciones' => 'Sustentado',
             ]);
 
-            // Paso 7: actualizar práctica como finalizada
+            
             if ($plan->solicitudInforme && $plan->solicitudInforme->practica) {
                 $plan->solicitudInforme->practica->updateQuietly([
                     'estado' => 'Finalizado',
+                    'activo' => false,
+                ]);
+            }
+            //edesactivamos el estado de la solicitud
+            if (
+                $plan->solicitudInforme &&
+                $plan->solicitudInforme->practica &&
+                $plan->solicitudInforme->practica->solicitude
+            ) {
+                $plan->solicitudInforme->practica->solicitude->updateQuietly([
                     'activo' => false,
                 ]);
             }

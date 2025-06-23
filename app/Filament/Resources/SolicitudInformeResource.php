@@ -11,6 +11,7 @@ use App\Models\InformePractica;
 use App\Models\JuradoDeInforme;
 use App\Models\Practica;
 use App\Models\SolicitudInforme;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Components\Tabs\Tab;
 use Filament\Forms\Form;
@@ -222,7 +223,7 @@ public static function canCreate(): bool
                     ->icon('heroicon-o-check-circle')  
                     ->color('success')
                     ->modalHeading(' ')
-                    ->modalHeading('VALIDACIÓN DE LA SOLICITUD')
+                    ->modalHeading(fn ($record) =>'VALIDANDO SOLICITUD DE '.strtoupper(optional($record->estudiante)->nombre))
                     ->requiresConfirmation()
                     ->modalIcon('heroicon-o-clipboard-document-check')
                     ->modalSubmitActionLabel('Guardar')
@@ -264,6 +265,16 @@ public static function canCreate(): bool
                                 ->title('Solicitud Aceptada')
                                 ->success()
                                 ->send();
+                            // aca verificas que llege la notiicacion al director de escuela
+                            $usuarioDirector = User::role('Director de escuela')->get();
+                            foreach ($usuarioDirector as $usuario) {
+                                Notification::make()
+                                    ->title('Asignacion de Jurados de Informe')
+                                     ->body('Tienes una nueva solicitud de informe aceptada que requiere la asignación de Jurados. 
+                                           <br><a href="' . route('filament.admin.resources.solicitud-informes.index') . '" style="color: #3b82f6; text-decoration: underline;">Ver solicitudes</a>')
+                                    ->success()
+                                    ->sendToDatabase($usuario);
+                            }
                         }
 
                         if ($decision === 'rechazado') {
@@ -291,7 +302,7 @@ public static function canCreate(): bool
                         $user = auth()->user();
                       /** @var User $user */
 
-                    if (in_array($record->estado, ['Comisión asignada'])) {
+                    if (in_array($record->estado, ['Aceptado','Comisión asignada'])) {
                             // Solo admin puede ver en esos estados
                             return $user->hasRole('Admin');
                         }
@@ -370,7 +381,6 @@ public static function canCreate(): bool
                                 $informe = InformeDePractica::create([
                                     'solicitud_informe_id' => $record->id,
                                     'estado' => 'Pendiente',
-                                    'fecha_resolucion' => now()
                                 ]);
 
                                 // Asignar jurados
@@ -393,6 +403,16 @@ public static function canCreate(): bool
 
                                 // Actualizar estado
                                 $record->update(['estado' => 'Jurado asignado']);
+                                 $usuarioEstudiante = $record->estudiante?->user;
+
+                                    if ($usuarioEstudiante) {
+                                    Notification::make()
+                                        ->title('Jurados asignados')
+                                        ->body('Ya se te asignó jurados que evaluará tu Informe de Práctica. 
+                                        Revisa la sección de Seguimiento para ver los docentes asignados.')
+                                        ->success()
+                                        ->sendToDatabase($usuarioEstudiante);
+                                }
                             });
 
                             // Ahora sí: solo se muestra si TODO fue exitoso

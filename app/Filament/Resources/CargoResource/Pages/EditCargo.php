@@ -10,10 +10,15 @@ class EditCargo extends EditRecord
 {
     protected static string $resource = CargoResource::class;
 
+
     protected function getHeaderActions(): array
     {
         return [
             Actions\DeleteAction::make(),
         ];
+    }
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
     }
 }

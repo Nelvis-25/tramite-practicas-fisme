@@ -29,6 +29,7 @@ use Filament\Pages\Tenancy\RegisterTenant;
 use Spatie\Permission\Models\Role;
 use App\Filament\Pages\Auth\Register;
 use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\NavigationItem;
 use Filament\Support\Assets\Css;
 
 class AdminPanelProvider extends PanelProvider
@@ -71,12 +72,10 @@ class AdminPanelProvider extends PanelProvider
             
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                //Widgets\AccountWidget::class,
+                Widgets\AccountWidget::class,
                 \App\Filament\Widgets\PracticasTotal::class,
                 \App\Filament\Widgets\PracticasPastel::class,
                 \App\Filament\Widgets\Asesorlista::class,
-
-               
             ])
             ->middleware([
                 EncryptCookies::class,

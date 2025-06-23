@@ -9,4 +9,8 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateInformeDePractica extends CreateRecord
 {
     protected static string $resource = InformeDePracticaResource::class;
+        protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

@@ -34,7 +34,7 @@ class PracticasTotal extends BaseWidget
                 ->extraAttributes([
                         'class' => 'flex flex-col items-center justify-center text-center bg-white text-gray-900 border border-gray-300 shadow-sm rounded-md',
                     ]),
-            Stat::make('Informe de prácticas', $totalPractica )
+            Stat::make('Informe y desarrollo de prácticas', $totalPractica )
                 ->description('Total confirmado')
                 ->descriptionIcon('heroicon-o-users')
                 ->color('primary')

@@ -9,4 +9,8 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateCargo extends CreateRecord
 {
     protected static string $resource = CargoResource::class;
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

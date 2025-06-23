@@ -30,7 +30,7 @@ class EvaluacionPlanDePracticaResource extends Resource
 
     $user = auth()->user();
      /** @var User $user */
-    if ($user && $user->hasRole('Comision')) {
+    if ($user && $user->hasRole('Comisión Permanente')) {
         $docente = \App\Models\Docente::where('user_id', $user->id)->first();
 
         if ($docente) {
@@ -266,7 +266,7 @@ class EvaluacionPlanDePracticaResource extends Resource
                         ->modalIcon('heroicon-o-clipboard-document-check')
                         ->modalSubmitActionLabel('Guardar')
                         ->modalWidth('md')
-                       // ->visible(fn ($record) => $record->estado !== 'Aprobado')
+                        ->visible(fn ($record) => !in_array($record->estado, ['Aprobado', 'Desaprobado']))
                         ->form([
                             Forms\Components\Radio::make('estado')
                                 ->label('Resultado de la Evaluación')

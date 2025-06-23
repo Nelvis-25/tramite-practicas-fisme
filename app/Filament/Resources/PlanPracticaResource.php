@@ -159,19 +159,21 @@ public static function shouldRegisterNavigation(): bool
                         })->implode('<br>') ?? '<em>Sin cargos</em>';
                     })
                     ->wrap(), 
-
-                Tables\Columns\TextColumn::make('fecha_sustentacion')
-                   ->label('Fecha de sustentación')
-                    ->alignCenter()
-                   ->searchable()
-                    ->dateTime()
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('fecha_entrega_a_docentes')
                     ->searchable()
                      ->alignCenter()
                     ->date()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
+                Tables\Columns\TextColumn::make('fecha_sustentacion')
+                   ->label('Fecha de sustentación')
+                   ->searchable()
+                    ->dateTime('l, d \d\e F \d\e\l Y \a \l\a\s H:i a')
+                    ->sortable()
+                    ->extraAttributes([
+                         'style' => 'max-width: 150px; white-space: normal; overflow-wrap: break-word; text-align: justify;',
+                    ]),
+            
                 Tables\Columns\TextColumn::make('fecha_resolucion')
                     ->label('Fecha de resolución')
                      ->alignCenter()
@@ -331,8 +333,8 @@ public static function shouldRegisterNavigation(): bool
                        
                         if ($record->fecha_sustentacion && $record->fecha_sustentacion != $data['fecha_sustentacion']) {
                             $fechaAnterior = \Carbon\Carbon::parse($record->fecha_sustentacion)->format('d/m/Y H:i');
-                            $fechaNueva = \Carbon\Carbon::parse($data['fecha_sustentacion'])->format('d/m/Y H:i');
-                            $datosActualizar['observaciones'] = "Reprogramado de: {$fechaAnterior} para la fecha: {$fechaNueva}";
+                            $fechaNueva = \Carbon\Carbon::parse($data['fecha_sustentacion'])->translatedFormat('l, d \d\e F \d\e\l Y \a \l\a\s H:i a');
+                            $datosActualizar['observaciones'] = "Reprogramado del {$fechaAnterior} para la el día {$fechaNueva}";
                         }
                     }
 
@@ -343,6 +345,34 @@ public static function shouldRegisterNavigation(): bool
                     if (!empty($datosActualizar)) {
                         $record->update($datosActualizar);
                     }
+                     $usuarioEstudiante = $record->solicitude->estudiante?->user;
+                     $usuarioComision = $record->solicitude->estudiante?->user;
+
+                        if ($usuarioEstudiante) {
+                        Notification::make()
+                            ->title('Asignación de Fecha de Sustentación')
+                            ->body('Se te ha asignado la fecha de sustentación de tu Plan de Práctica. Revisa Revisa la seción de seguimiento.')
+                            ->success()
+                            ->sendToDatabase($usuarioEstudiante);
+                    }
+                    // Obtener la comisión permanente activa
+                            $comision = \App\Models\ComisionPermanente::where('estado', true)->first();
+
+                            if ($comision && $record->fecha_sustentacion) {
+                                $fechaFormateada = \Carbon\Carbon::parse($record->fecha_sustentacion)->format('d/m/Y H:i');
+
+                                foreach ($comision->integranteComision as $integrante) {
+                                    $userDocente = optional($integrante->docente)->user;
+
+                                    if ($userDocente) {
+                                        Notification::make()
+                                            ->title('Fecha de Sustentación programada')
+                                            ->body('Se ha programado la sustentación del estudiante ' . strtoupper(optional($record->solicitude->estudiante)->nombre) . ' para el día ' . $fechaFormateada . '. ')
+                                            ->success()
+                                            ->sendToDatabase($userDocente);
+                                    }
+                                }
+                            }
 
                     Notification::make()
                         ->title('Fechas actualizadas correctamente')
@@ -352,8 +382,17 @@ public static function shouldRegisterNavigation(): bool
                 })
                 ->modalSubmitActionLabel('Guardar')
                 ->modalCancelActionLabel('Cancelar')
-                ->visible(fn (PlanPractica $record) => $record->estado !== 'Aprobado')
-                ,
+                 ->visible(function (PlanPractica $record) {
+                        $user = auth()->user();
+                        /** @var \App\Models\User $user */
+
+                        if (in_array($record->estado, ['Aprobado', 'Desaprobado'])) {
+                            return false; // Nadie la ve si está Aprobado o Desaprobado
+                        }
+
+                        return $user->hasAnyRole(['Admin', 'Secretaria', 'Comisión Permanente']);
+                    }),
+                    
                 
                  Action::make('asignar_resolucion')
                     ->label('Asignar Resolución')
@@ -401,7 +440,13 @@ public static function shouldRegisterNavigation(): bool
                         }
                     })
                     ->modalSubmitActionLabel('Guardar')
-                    ->modalCancelActionLabel('Cancelar'),
+                    ->modalCancelActionLabel('Cancelar')
+                      ->visible(function ($record) {
+                            $user = auth()->user();
+                            /** @var User $user */
+                            
+                            return $user->hasAnyRole(['Admin', 'Secretaria']);
+                        }),
 
 
                 Action::make('descargar_carta')

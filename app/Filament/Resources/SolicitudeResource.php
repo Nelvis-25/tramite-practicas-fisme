@@ -3,11 +3,13 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SolicitudeResource\Pages;
+use App\Notifications\ComisionAsignadaNotification;
 use App\Filament\Resources\SolicitudeResource\RelationManagers;
 use App\Models\ComisionPermanente;
 use App\Models\PlanPractica;
 use App\Models\Requisito;
 use App\Models\Solicitude;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -308,7 +310,6 @@ class SolicitudeResource extends Resource
                     ->label('Validar')
                     ->icon('heroicon-o-check-circle')  
                     ->color('success')
-                    ->modalHeading(' ')
                     ->modalHeading(fn ($record) =>'VALIDANDO SOLICITUD DE '.strtoupper(optional($record->estudiante)->nombre))
                     ->requiresConfirmation()
                     ->modalIcon('heroicon-o-clipboard-document-check')
@@ -363,6 +364,17 @@ class SolicitudeResource extends Resource
                                 ->title('Solicitud Aceptada')
                                 ->success()
                                 ->send();
+
+                                // aca verificas que llege la notiicacion al director de escuela
+                            $usuarioDirector = User::role('Director de escuela')->get();
+                            foreach ($usuarioDirector as $usuario) {
+                                Notification::make()
+                                    ->title('Asignacion de Comisión Permanente')
+                                     ->body('Tienes una nueva solicitud aceptada que requiere la asignación de una Comisión Permanente. 
+                                           <br><a href="' . route('filament.admin.resources.solicitudes.index') . '" style="color: #3b82f6; text-decoration: underline;">Ver solicitudes</a>')
+                                    ->success()
+                                    ->sendToDatabase($usuario);
+                            }
                         }
 
                         if ($decision === 'rechazado') {
@@ -390,7 +402,7 @@ class SolicitudeResource extends Resource
                         $user = auth()->user();
                       /** @var User $user */
 
-                    if (in_array($record->estado, ['Comisión asignada'])) {
+                    if (in_array($record->estado, ['Aceptado','Comisión asignada'])) {
                             // Solo admin puede ver en esos estados
                             return $user->hasRole('Admin');
                         }
@@ -461,6 +473,18 @@ class SolicitudeResource extends Resource
                         $record->update([
                             'estado' => 'Comisión Asignada',
                         ]);
+                        // envio de notificacion al usuario estudiante
+                         $usuarioEstudiante = $record->estudiante?->user;
+
+                        if ($usuarioEstudiante) {
+                        Notification::make()
+                            ->title('Comisión Permanente asignada')
+                            ->body('Ya se te asignó la Comisión Permanente que evaluará tu Plan de Práctica. 
+                            Revisa la sección de Seguimiento para ver los docentes asignados.')
+                            ->success()
+                            ->sendToDatabase($usuarioEstudiante);
+                    }
+                        
                     }
             
                     // ✅ Notificación de éxito (opcional)
@@ -469,11 +493,11 @@ class SolicitudeResource extends Resource
                         ->success()
                         ->send();
                 })
-                    ->visible(function ($record) {
+                ->visible(function ($record) {
                         $user = auth()->user();
                       /** @var User $user */
 
-                        if (in_array($record->estado, ['Comisión asignada'])) {
+                    if (in_array($record->estado, ['Comisión asignada'])) {
                             // Solo admin puede ver en esos estados
                             return $user->hasRole('Admin');
                         }

@@ -10,5 +10,8 @@ class CreateEvaluacionPlanDePractica extends CreateRecord
 {
     protected static string $resource = EvaluacionPlanDePracticaResource::class;
 
-    
+        protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

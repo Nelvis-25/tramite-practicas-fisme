@@ -110,17 +110,19 @@ class InformeDePracticaResource extends Resource
                         ->formatStateUsing(function ($state) {
                             return str_replace(',', '<br>', $state);
                         }),
-                Tables\Columns\TextColumn::make('fecha_sustentacion')
-                   ->label('Fecha de sustentación')
-                   ->alignCenter()
-                   ->searchable()
-                    ->dateTime()
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('fecha_entrega_a_docentes')
                     ->searchable()
                     ->alignCenter()
                     ->date()
                     ->sortable(),
+               Tables\Columns\TextColumn::make('fecha_sustentacion')
+                   ->label('Fecha de sustentación')
+                   ->searchable()
+                    ->dateTime('l, d \d\e F \d\e\l Y \a \l\a\s H:i a')
+                    ->sortable()
+                    ->extraAttributes([
+                         'style' => 'max-width: 150px; white-space: normal; overflow-wrap: break-word; text-align: justify;',
+                    ]),
                  Tables\Columns\TextColumn::make('fecha_resolucion')
                     ->label('Fecha de resolución')
                      ->alignCenter()
@@ -154,8 +156,8 @@ class InformeDePracticaResource extends Resource
                     })
                    
                     ->sortable()
-                    ->extraAttributes([
-                        'style' => 'width: 160px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; word-wrap: break-word;',
+                     ->extraAttributes([
+                         'style' => 'max-width: 140px; white-space: normal; overflow-wrap: break-word; text-align: justify;',
                     ])
                      ->toggleable(isToggledHiddenByDefault: false),
                 
@@ -280,10 +282,10 @@ class InformeDePracticaResource extends Resource
                         }
 
                        
-                        if ($record->fecha_sustentacion && $record->fecha_sustentacion != $data['fecha_sustentacion']) {
+                       if ($record->fecha_sustentacion && $record->fecha_sustentacion != $data['fecha_sustentacion']) {
                             $fechaAnterior = \Carbon\Carbon::parse($record->fecha_sustentacion)->format('d/m/Y H:i');
-                            $fechaNueva = \Carbon\Carbon::parse($data['fecha_sustentacion'])->format('d/m/Y H:i');
-                            $datosActualizar['observaciones'] = "Reprogramado de: {$fechaAnterior} para la fecha: {$fechaNueva}";
+                            $fechaNueva = \Carbon\Carbon::parse($data['fecha_sustentacion'])->translatedFormat('l, d \d\e F \d\e\l Y \a \l\a\s H:i a');
+                            $datosActualizar['observaciones'] = "Reprogramado del: {$fechaAnterior} para la el día {$fechaNueva}";
                         }
                     }
 
@@ -294,6 +296,26 @@ class InformeDePracticaResource extends Resource
                     if (!empty($datosActualizar)) {
                         $record->update($datosActualizar);
                     }
+                     // ✅ Notificar a los jurados asignados
+                      $jurados = $record->jurados; 
+
+                            foreach ($jurados as $jurado) {
+                                $usuario = $jurado->docente?->user;
+
+                                if ($usuario) {
+                                    Notification::make()
+                                        ->title('Fecha de Sustentación Programada')
+                                        ->body(
+                                        'Se ha programado la sustentación del estudiante ' 
+                                        . $record->solicitudInforme->estudiante->nombre . 
+                                        ', para evaluar su informe final el día ' 
+                                        . \Carbon\Carbon::parse($record->fecha_sustentacion)->format('d/m/Y') . 
+                                        ' a las ' . \Carbon\Carbon::parse($record->fecha_sustentacion)->format('H:i')
+                                    )
+                                      ->success()
+                                     ->sendToDatabase($usuario);
+                                }
+                            }
 
                     Notification::make()
                         ->title('Fechas actualizadas correctamente')
@@ -303,7 +325,16 @@ class InformeDePracticaResource extends Resource
                 })
                 ->modalSubmitActionLabel('Guardar')
                 ->modalCancelActionLabel('Cancelar')
-                ->visible(fn (InformeDePractica $record) => $record->estado !== 'Aprobado'),
+                 ->visible(function (InformeDePractica $record) {
+                        $user = auth()->user();
+                        /** @var \App\Models\User $user */
+
+                        if (in_array($record->estado, ['Aprobado'])) {
+                            return false; // Nadie la ve si está Aprobado o Desaprobado
+                        }
+
+                        return $user->hasAnyRole(['Admin', 'Secretaria', 'Jurado de informe']);
+                    }),
                 
                 Tables\Actions\Action::make('asignar_resolucion')
                     ->label('Asignar Resolución')

@@ -298,7 +298,7 @@ class EvaluacionDeInformeResource extends Resource
                 ->icon('heroicon-o-document-plus')
                 ->modalHeading(fn ($record) => 'EVALUANDO INFORME DE PRÁCTICA DE ' . strtoupper($record->informeDePractica->solicitudInforme->estudiante->nombre))
                 ->requiresConfirmation()
-                //->visible(fn ($record) => $record->estado !== 'Evaluado')
+                ->visible(fn ($record) => $record->estado !== 'Evaluado')
                 ->modalIcon('heroicon-o-document-magnifying-glass')
                 ->modalWidth('md')
                     ->form([
@@ -339,7 +339,7 @@ class EvaluacionDeInformeResource extends Resource
                     Tables\Actions\ActionGroup::make([
                         
                         Tables\Actions\Action::make('ver_acta')
-                            ->label('Ver Acta')
+                            ->label('Ver Acta de Sustentación')
                             ->icon('heroicon-o-eye')
                             ->color('primary')
                             ->url(fn ($record) => route('pdf.acta', ['id' => $record->id]))
@@ -396,7 +396,38 @@ class EvaluacionDeInformeResource extends Resource
                         return $record->jurados && $record->jurados->cargo === 'Accesitario';
                     }),  
                     
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->visible(function ($record) {
+                        $estado = strtolower($record->estado);
+                        
+                        // Evitar errores si no hay informe
+                        if (!$record->informeDePractica) {
+                            return true;
+                        }
+
+                        // Calcular promedio de la ronda
+                        $promedio = $record->informeDePractica
+                            ->evaluaciones()
+                            ->where('ronda', $record->ronda)
+                            ->where('estado', 'Evaluado')
+                            ->avg('nota');
+
+                        // Si no hay 3 evaluaciones, lo dejamos visible igual
+                        $evaluaciones = $record->informeDePractica
+                            ->evaluaciones()
+                            ->where('ronda', $record->ronda)
+                            ->where('estado', 'Evaluado')
+                            ->count();
+
+                        if ($evaluaciones < 3) {
+                            return true;
+                        }
+
+                        $promedio = round($promedio);
+
+                        // Ocultar si está evaluado y el promedio es mayor o igual a 12
+                        return !($estado === 'evaluado' && $promedio >= 12);
+                    }),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([

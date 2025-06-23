@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use App\Models\EvaluacionPlanDePractica;
 use App\Models\InformeDePractica;
 use App\Models\SolicitudInforme;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -32,7 +33,10 @@ class SeguimientoComponent extends Component
     public $fechaSustentacionInforme;
     public $estadoInforme;
     public $juradosInforme = [];
-     public $observacionesInforme;
+    public $observacionesInforme;
+     //contactos de la secretaria 
+    public $nombreSecretaria;
+    public $telefonoSecretaria;
     public function mount()
     {
         $user = Auth::user();
@@ -132,6 +136,12 @@ class SeguimientoComponent extends Component
                     }  
                 }
             }
+        }
+        $secretaria = User::role('Secretaria')->latest()->first();
+
+        if ($secretaria && $secretaria->docente) {
+            $this->nombreSecretaria = $secretaria->docente->nombre;
+            $this->telefonoSecretaria = $secretaria->docente->telefono ?? $secretaria->email;
         }
     }
 

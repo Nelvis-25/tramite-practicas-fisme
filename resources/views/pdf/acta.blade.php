@@ -126,7 +126,7 @@
         @endphp
         <p style="text-align: justify;">
             En la ciudad de Bagua, el día <strong>{{$fecha->day}}</strong> de {{ $fecha->translatedFormat('F') }} del año <strong>{{ $fecha->year }}</strong>, 
-            siendo las <strong>{{ $fecha->format('h:i a') }}</strong> horas, el egresado de 
+            siendo las <strong>{{ $fecha->format('h:i a') }}</strong> horas, {{ $informe->solicitudInforme->estudiante->sexo === 'F' ? 'la egresada' : 'el egresado' }} de 
             la Escuela Profesional de Ingeniería de Sistemas <strong>{{ strtoupper($informe->solicitudInforme->estudiante->nombre) }}</strong>, defiende en sesión
              pública y en forma presencial el Informe Final de Prácticas Pre Profesionales 
              titulado: <strong>  {{ ($informe->solicitudInforme->practica->solicitude->nombre ?? 'No hay nombre del informe') }}</strong> ante el Jurado Evaluador, constituido por:</p>
@@ -180,7 +180,7 @@
                 @endforeach
             </ul>
 
-        <p style="text-align: justify;">Procedió el estudiante a realizar la exposición 
+        <p style="text-align: justify;">Procedió {{ $informe->solicitudInforme->estudiante->sexo === 'F' ? 'la estudiante' : 'el estudiante' }} a realizar la exposición 
             del Informe Final de Prácticas Pre Profesionales, haciendo especial mención en 
             el diagnóstico, acciones propuestas, acciones realizadas, resultados obtenidos, 
             dificultades encontradas, conclusiones y recomendaciones. Terminada la defensa 
@@ -189,7 +189,7 @@
              cuestiones y objeciones oportunas, las cuales fueron contestadas por el aspirante.</p>
 
         <p style="text-align: justify;">Tras la intervención de los miembros del Jurado Evaluador y las oportunas respuestas
-             de la estudiante, el Presidente abre un turno de intervenciones para los 
+     {{ $informe->solicitudInforme->estudiante->sexo === 'F' ? 'de la estudiante' : 'del estudiante' }}, el Presidente abre un turno de intervenciones para los 
              presentes en el acto, a fin de que expongan sus opiniones e objeciones que 
              consideren pertinentes.</p>
 

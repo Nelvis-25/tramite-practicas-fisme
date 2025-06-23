@@ -11,62 +11,88 @@ use Filament\Widgets\ChartWidget;
 class PracticasPastel extends ChartWidget
 {
     protected static ?string $heading = 'ESTADO GENERAL DE PRÁCTICAS';
+    
 
     protected static ?int $sort = 2;
 
     protected int | string | array $columnSpan = 1;
-
+ 
     protected function getContent(): string
     {
-        return '<div style="max-width: 300px; max-height: 300px; margin: 0 auto;">' . parent::getContent() . '</div>';
+        return <<<HTML
+        <div style="display: flex; flex-direction: column; align-items: center; min-height: 400px;">
+            {$this->renderChart()}
+        </div>
+        HTML;
     }
 
-protected function getData(): array
-{
-    $informesAprobados = InformeDePractica::where('estado', 'Aprobado')->count();
-    $informesDesaprobados = InformeDePractica::where('estado', 'Desaprobado')->count();
-    $planDesaprobados = PlanPractica::where('estado', 'Desaprobado')->count();
-    $practicasDesarrollo = Practica::where('estado', 'En desarrollo')->count();
-    $planEnProceso = PlanPractica::whereNotIn('estado', ['Desaprobado', 'Aprobado'])->count();
+    protected function getData(): array
+    {
+        $informesAprobados = InformeDePractica::where('estado', 'Aprobado')->count();
+        $informesDesaprobados = InformeDePractica::where('estado', 'Desaprobado')->count();
+        $planDesaprobados = PlanPractica::where('estado', 'Desaprobado')->count();
+        $practicasDesarrollo = Practica::where('estado', 'En desarrollo')->count();
+        $planEnProceso = PlanPractica::whereNotIn('estado', ['Desaprobado', 'Aprobado'])->count();
 
- return [
-        'datasets' => [
-            [
-                'label' => 'Estado de prácticas',
-                'data' => [$informesAprobados, $informesDesaprobados, $planDesaprobados, $practicasDesarrollo, $planEnProceso],
-                'backgroundColor' => ['#10B981', '#EF4444', '#F87171', '#60A5FA', '#FBBF24'],
-            ],
-        ],
-        'labels' => [
-            'Informes Aprobados',
-            'Informes Desaprobados',
-            'Planes Desaprobados',
-            'Prácticas en Desarrollo',
-            'Planes en Proceso',
-        ],
-        'options' => [
-            'plugins' => [
-                'legend' => [
-                    'position' => 'bottom',
-                    'labels' => ['font' => ['size' => 10]],
-                ],
-                'datalabels' => [
-                    'display' => true,
-                    'color' => '#fff',
-                    'font' => [
-                        'weight' => 'bold',
-                        'size' => 14,
+        return [
+            'datasets' => [
+                [
+                    'data' => [
+                        $informesAprobados,
+                        $informesDesaprobados,
+                        $planDesaprobados,
+                        $practicasDesarrollo,
+                        $planEnProceso,
                     ],
-                    'formatter' => RawJs::make(<<<'JS'
-                        function(value, context) {
-                            return value > 0 ? value : '';
-                        }
-                    JS),
+                    'backgroundColor' => ['#10B981', '#EF4444', '#F87171', '#60A5FA', '#FBBF24'],
+                    'borderWidth' => 2,
                 ],
             ],
-        ],
-        'plugins' => ['datalabels'], // 👈 Esto va al mismo nivel que 'datasets' y 'labels'
-    ];
+            'labels' => [
+                'Prácticas Aprobados',
+                'Prácticas Desaprobados',
+                'Planes de Prácticas Desaprobados',
+                'Prácticas en Desarrollo          ',
+                'Planes de Prácticas en Proceso',
+            ],
+            'options' => [
+                'responsive' => true,
+                'maintainAspectRatio' => false,
+                'cutout' => '70%',
+                'plugins' => [
+                    'legend' => [
+                        'position' => 'top',
+                        'labels' => [
+                            'font' => [
+                                'weight' => 'bold',
+                                'size' => 14
+                            ],
+                            'generateLabels' => RawJs::make('function(chart) {
+                                const data = chart.data;
+                                return data.labels.map((label, i) => ({
+                                    text: label + " " + data.datasets[0].data[i],
+                                    fillStyle: data.datasets[0].backgroundColor[i],
+                                    hidden: isNaN(data.datasets[0].data[i]) || data.datasets[0].data[i] <= 0,
+                                    index: i
+                                }));
+                            }')
+                        ],
+                    ],
+                    'tooltip' => [
+                        'enabled' => true,
+                        'callbacks' => [
+                            'label' => RawJs::make('function(context) {
+                                return context.label + " " + context.raw;
+                            }'),
+                            'title' => RawJs::make('function() { return ""; }') // Elimina el título del tooltip
+                        ]
+                    ],
+                    'datalabels' => [
+                        'display' => false
+                    ]
+                ]
+            ]
+        ];
     }
 
     protected function getType(): string
