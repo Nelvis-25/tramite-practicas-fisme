@@ -351,8 +351,8 @@ public static function shouldRegisterNavigation(): bool
                         if ($usuarioEstudiante) {
                         Notification::make()
                             ->title('Asignación de Fecha de Sustentación')
-                            ->body('Se te ha asignado la fecha de sustentación de tu Plan de Práctica. Revisa Revisa la seción de seguimiento.')
-                            ->success()
+                            ->body('Se te ha asignado la fecha de sustentación de tu Plan de Práctica. Revisa la seción de seguimiento.')
+                             ->success()
                             ->sendToDatabase($usuarioEstudiante);
                     }
                     // Obtener la comisión permanente activa
@@ -367,8 +367,8 @@ public static function shouldRegisterNavigation(): bool
                                     if ($userDocente) {
                                         Notification::make()
                                             ->title('Fecha de Sustentación programada')
-                                            ->body('Se ha programado la sustentación del estudiante ' . strtoupper(optional($record->solicitude->estudiante)->nombre) . ' para el día ' . $fechaFormateada . '. ')
-                                            ->success()
+                                            ->body('Se ha programado la sustentación de la/el estudiante ' . strtoupper(optional($record->solicitude->estudiante)->nombre) . ' para el día ' . $fechaFormateada . '. ')
+                                             ->success()
                                             ->sendToDatabase($userDocente);
                                     }
                                 }

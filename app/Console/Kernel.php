@@ -24,10 +24,10 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // Se ejecutará todos los días a las 08:00 a.m.
-        $schedule->command('app:enviar-recordatorios-de-sustentacion')->dailyAt('08:00');
-        $schedule->command('app:enviar-recordatorios-comision')->dailyAt('08:00');
-        $schedule->command('app:enviar-recordatorios-informe-estudiante')->dailyAt('07:00');
-        $schedule->command('app:enviar-recordatorios-jurados-informe')->dailyAt('07:00');
+        $schedule->command('app:enviar-recordatorios-de-sustentacion')->dailyAt('09:00');
+        $schedule->command('app:enviar-recordatorios-comision')->dailyAt('09:00');
+        $schedule->command('app:enviar-recordatorios-informe-estudiante')->dailyAt('09:00');
+        $schedule->command('app:enviar-recordatorios-jurados-informe')->dailyAt('09:00');
 
 
     }

@@ -109,19 +109,20 @@ class SolicitudeResource extends Resource
                    // ->relationship('asesor', 'nombre')
                    // ->required()
                    // ->searchable(),
-                 Forms\Components\Select::make('asesor_id')
+                Forms\Components\Select::make('asesor_id')
                     ->label('Seleccione su asesor')
                     ->relationship('asesor', 'nombre', modifyQueryUsing: function ($query) {
-                        return $query->withCount([
-                            'solicitude as solicitudes_en_proceso_count' => function ($q) {
-                                $q->where('activo', true)
-                                ->whereIn('estado', ['Aceptado', 'Comisión asignada']);
-                            }
-                        ])
-                        ->having('solicitudes_en_proceso_count', '<', 5);
+                        return $query->whereHas('solicitude', function ($q) {
+                            $q->where('activo', true)
+                            ->whereIn('estado', ['Aceptado', 'Comisión asignada']);
+                        }, '<', 5);
                     })
                     ->searchable()
-                    ->required(),
+                    ->required()
+                    ->noSearchResultsMessage('No se encontraron asesores disponibles (límite de 5 prácticas activas)')
+                    ->helperText('Solo se muestran asesores con menos de 5 prácticas activas')
+                    ,
+                                
                 Forms\Components\DatePicker::make('fecha_inicio')
                     ->label('Fecha de inicio de su práctica')
                     ->required(),
@@ -372,7 +373,7 @@ class SolicitudeResource extends Resource
                                     ->title('Asignacion de Comisión Permanente')
                                      ->body('Tienes una nueva solicitud aceptada que requiere la asignación de una Comisión Permanente. 
                                            <br><a href="' . route('filament.admin.resources.solicitudes.index') . '" style="color: #3b82f6; text-decoration: underline;">Ver solicitudes</a>')
-                                    ->success()
+                                     ->success()
                                     ->sendToDatabase($usuario);
                             }
                         }
@@ -446,7 +447,7 @@ class SolicitudeResource extends Resource
             
                     if ($existePlan) {
                         $record->update([
-                            'estado' => 'Comisión Asignada',
+                            'estado' => 'Comisión asignada',
                         ]);
                     }
                      else {
@@ -471,7 +472,7 @@ class SolicitudeResource extends Resource
                         ]);
             
                         $record->update([
-                            'estado' => 'Comisión Asignada',
+                            'estado' => 'Comisión asignada',
                         ]);
                         // envio de notificacion al usuario estudiante
                          $usuarioEstudiante = $record->estudiante?->user;
@@ -481,7 +482,7 @@ class SolicitudeResource extends Resource
                             ->title('Comisión Permanente asignada')
                             ->body('Ya se te asignó la Comisión Permanente que evaluará tu Plan de Práctica. 
                             Revisa la sección de Seguimiento para ver los docentes asignados.')
-                            ->success()
+                             ->success()
                             ->sendToDatabase($usuarioEstudiante);
                     }
                         
@@ -565,6 +566,7 @@ class SolicitudeResource extends Resource
                         }
 
                         return true; }),
+                Tables\Actions\DeleteAction::make(),
                 
             ])
             ->bulkActions([

@@ -177,13 +177,14 @@ public static function canCreate(): bool
                     ->openUrlInNewTab()
                     ->tooltip(fn ($record) => $record->informe ? 'Ver plan de práctica' : 'Sin archivo')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('solicitud')
+                Tables\Columns\IconColumn::make('solicitud')
                     ->label('Solicitud al Decano')
+                    ->icon('heroicon-o-document-text')
                      ->alignCenter()
                     ->color(fn ($record) => $record->solicitud ? 'primary' : 'danger')
                     ->url(fn ($record) => $record->solicitud ? asset('storage/' . str_replace('storage/', '', $record->solicitud)) : null)
                     ->openUrlInNewTab()
-                    ->tooltip(fn ($record) => $record->solicitud? 'Ver solicitud al Decano' : 'Sin archivo')
+                    ->tooltip(fn ($record) => $record->solicitud ? 'Ver solicitud al Decano' : 'Sin archivo')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('practica.solicitude.fecha_fin')
                     ->label('Fecha en que finalizó ')

@@ -22,7 +22,6 @@ return new class extends Migration
             $table->date('fecha_fin')->nullable();
             $table->string('solicitud')->nullable(); 
             $table->string('constancia')->nullable();
-
             $table->string('informe')->nullable();
             $table->string('carta_presentacion')->nullable();
             $table->string('comprobante_pago')->nullable();

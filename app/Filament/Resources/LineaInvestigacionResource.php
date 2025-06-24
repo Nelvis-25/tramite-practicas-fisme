@@ -29,6 +29,7 @@ class LineaInvestigacionResource extends Resource
                     ->required()
                     ->maxLength(150),
                 Forms\Components\Toggle::make('estado')
+                    ->default(true)
                     ->required(),
             ]);
     }
@@ -42,6 +43,7 @@ class LineaInvestigacionResource extends Resource
                 Tables\Columns\IconColumn::make('estado')
                     ->label('Estado')
                     ->boolean()
+                    
                     ->trueColor('primary')  
                     ->falseColor('danger'),
                 Tables\Columns\TextColumn::make('created_at')

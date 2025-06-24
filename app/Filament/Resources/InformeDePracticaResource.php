@@ -296,6 +296,16 @@ class InformeDePracticaResource extends Resource
                     if (!empty($datosActualizar)) {
                         $record->update($datosActualizar);
                     }
+                    // notificacion al estudiante 
+                     $usuarioEstudiante = $record->solicitudInforme->estudiante?->user;
+                     
+                        if ($usuarioEstudiante) {
+                        Notification::make()
+                            ->title('Asignación de Fecha de Sustentación')
+                            ->body('Se te ha asignado la fecha de sustentación de tu Informe de Práctica. Revisa la seción de seguimiento.')
+                             ->success()
+                            ->sendToDatabase($usuarioEstudiante);
+                    }
                      // ✅ Notificar a los jurados asignados
                       $jurados = $record->jurados; 
 
@@ -306,7 +316,7 @@ class InformeDePracticaResource extends Resource
                                     Notification::make()
                                         ->title('Fecha de Sustentación Programada')
                                         ->body(
-                                        'Se ha programado la sustentación del estudiante ' 
+                                        'Se ha programado la sustentación de el/la estudiante ' 
                                         . $record->solicitudInforme->estudiante->nombre . 
                                         ', para evaluar su informe final el día ' 
                                         . \Carbon\Carbon::parse($record->fecha_sustentacion)->format('d/m/Y') . 
@@ -352,7 +362,7 @@ class InformeDePracticaResource extends Resource
                             ->label('Fecha de Resolución')
                             ,
 
-                        Forms\Components\FileUpload::make('resolucion')
+                        Forms\Components\FileUpload::make('resolucion') 
                             ->label('Archivo de Resolución')
                             ->acceptedFileTypes(['application/pdf'])
                             ->maxSize(10000) 

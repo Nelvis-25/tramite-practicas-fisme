@@ -116,7 +116,24 @@ class ComisionPermanenteResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\Action::make('toggleEstado')
+                    ->label(fn ($record) => $record->estado ? 'Inhabilitar' : 'Habilitar')
+                    ->icon(fn ($record) => $record->estado ? 'heroicon-o-eye' : 'heroicon-o-eye')
+
+                    ->color(fn ($record) => $record->estado ? 'danger' : 'primary')
+                    ->action(function ($record) {
+                        $record->estado = !$record->estado;
+                        $record->save();
+                    })
+                    ->requiresConfirmation()
+               , 
+                Tables\Actions\DeleteAction::make()
+                ->visible(function () {
+                    $user = auth()->user();
+                    /** @var User $user */
+                    return $user->hasAnyRole(['Admin']);
+                })
+                ,
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

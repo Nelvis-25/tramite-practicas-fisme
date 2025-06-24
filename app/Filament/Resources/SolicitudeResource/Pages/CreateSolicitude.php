@@ -23,8 +23,8 @@ class CreateSolicitude extends CreateRecord
         foreach ($usuariosSecretaria as $usuario) {
             Notification::make()
                 ->title('Nueva Solicitud registrada')
-               ->body('Tienes una solicitud pendiente de validación.')
-                ->success()
+                ->body('Tienes una solicitud pendiente de validación.')
+                 ->success()
                 ->sendToDatabase($usuario);
         }
     }
