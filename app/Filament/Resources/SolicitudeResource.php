@@ -119,8 +119,8 @@ class SolicitudeResource extends Resource
                     })
                     ->searchable()
                     ->required()
-                    ->noSearchResultsMessage('No se encontraron asesores disponibles (límite de 5 prácticas activas)')
-                    ->helperText('Solo se muestran asesores con menos de 5 prácticas activas')
+                    ->noSearchResultsMessage('Este asesor no está disponible. Ya está asignado a 5 estudiantes. Cambie de asesor e inténtelo de nuevo.')
+                    ->helperText('Solo se muestran asesores con menos de 5 prácticas activas ')
                     ,
                                 
                 Forms\Components\DatePicker::make('fecha_inicio')

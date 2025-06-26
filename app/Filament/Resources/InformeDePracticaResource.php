@@ -14,6 +14,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
 class InformeDePracticaResource extends Resource
 {
@@ -102,6 +103,7 @@ class InformeDePracticaResource extends Resource
                             "<div>{$jurado->docente->grado_academico} {$jurado->docente->nombre}</div>"
                         )->implode('');
                     }),
+                    
 
                     Tables\Columns\TextColumn::make('jurados.cargo')
                         ->label('Cargos')
@@ -114,7 +116,8 @@ class InformeDePracticaResource extends Resource
                     ->searchable()
                     ->alignCenter()
                     ->date()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
                Tables\Columns\TextColumn::make('fecha_sustentacion')
                    ->label('Fecha de sustentación')
                    ->searchable()
@@ -122,7 +125,8 @@ class InformeDePracticaResource extends Resource
                     ->sortable()
                     ->extraAttributes([
                          'style' => 'max-width: 150px; white-space: normal; overflow-wrap: break-word; text-align: justify;',
-                    ]),
+                    ])
+                    ->toggleable(isToggledHiddenByDefault: false),
                  Tables\Columns\TextColumn::make('fecha_resolucion')
                     ->label('Fecha de resolución')
                      ->alignCenter()
@@ -285,7 +289,7 @@ class InformeDePracticaResource extends Resource
                        if ($record->fecha_sustentacion && $record->fecha_sustentacion != $data['fecha_sustentacion']) {
                             $fechaAnterior = \Carbon\Carbon::parse($record->fecha_sustentacion)->format('d/m/Y H:i');
                             $fechaNueva = \Carbon\Carbon::parse($data['fecha_sustentacion'])->translatedFormat('l, d \d\e F \d\e\l Y \a \l\a\s H:i a');
-                            $datosActualizar['observaciones'] = "Reprogramado del: {$fechaAnterior} para la el día {$fechaNueva}";
+                            $datosActualizar['observaciones'] = "Reprogramado del: {$fechaAnterior} para el día {$fechaNueva}";
                         }
                     }
 
@@ -409,6 +413,7 @@ class InformeDePracticaResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
+                ExportBulkAction::make()
             ]);
     }
 

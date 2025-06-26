@@ -71,12 +71,8 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogoHeight('3rem')
             
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
-            ->widgets([
-                Widgets\AccountWidget::class,
-                \App\Filament\Widgets\PracticasTotal::class,
-                \App\Filament\Widgets\PracticasPastel::class,
-                \App\Filament\Widgets\Asesorlista::class,
-            ])
+            ->widgets(self::resolveWidgets())
+            
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -118,6 +114,24 @@ class AdminPanelProvider extends PanelProvider
             
             
     }
+    public static function resolveWidgets(): array
+{
+    $user = auth()->user();
+      /** @var \App\Models\User $user */
+    if ($user && $user->hasRole('Estudiante')) {
+        return [
+            \Filament\Widgets\AccountWidget::class,
+        ];
+    }
+
+    return [
+        \Filament\Widgets\AccountWidget::class,
+        \App\Filament\Widgets\PracticasTotal::class,
+        \App\Filament\Widgets\PracticasPastel::class,
+        \App\Filament\Widgets\Asesorlista::class,
+    ];
+}
+
      
     
 }

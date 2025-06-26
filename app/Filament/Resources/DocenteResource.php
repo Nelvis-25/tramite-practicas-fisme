@@ -40,8 +40,9 @@ class DocenteResource extends Resource
                     ->unique(ignoreRecord: true)
                     ->maxLength(15),
                 Forms\Components\TextInput::make('telefono')
-                    ->label('Teléfono')
+                    ->label('número de WhatsApp o Teléfono')
                     ->tel()
+                    ->unique(ignoreRecord: true)
                     ->required()
                     ->maxLength(9),
                 Forms\Components\TextInput::make('email')

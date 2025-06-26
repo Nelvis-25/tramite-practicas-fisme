@@ -334,7 +334,7 @@ public static function shouldRegisterNavigation(): bool
                         if ($record->fecha_sustentacion && $record->fecha_sustentacion != $data['fecha_sustentacion']) {
                             $fechaAnterior = \Carbon\Carbon::parse($record->fecha_sustentacion)->format('d/m/Y H:i');
                             $fechaNueva = \Carbon\Carbon::parse($data['fecha_sustentacion'])->translatedFormat('l, d \d\e F \d\e\l Y \a \l\a\s H:i a');
-                            $datosActualizar['observaciones'] = "Reprogramado del {$fechaAnterior} para la el día {$fechaNueva}";
+                            $datosActualizar['observaciones'] = "Reprogramado del {$fechaAnterior} para el día {$fechaNueva}";
                         }
                     }
 

@@ -13,6 +13,12 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 class PracticasTotal extends BaseWidget
 {
     protected static ?int $sort = 1;
+    public static function canView(): bool
+    {
+          /** @var User $user */
+          $user = auth()->user();
+        return auth()->check() && !$user->hasRole('Estudiante');
+    }
     protected function getStats(): array
     {
           $totalSolicitudes = Solicitude::where('estado', '!=', 'Pendiente')->count();

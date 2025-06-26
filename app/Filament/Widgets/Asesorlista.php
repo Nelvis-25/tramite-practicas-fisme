@@ -14,6 +14,12 @@ class AsesorLista extends BaseWidget
 {
     protected static ?string $heading = 'LISTADO DE ASESORES Y SU PARTICIPACIÓN EN PRÁCTICAS';
     protected static ?int $sort = 3;
+    public static function canView(): bool
+    {
+          /** @var User $user */
+          $user = auth()->user();
+        return auth()->check() && !$user->hasRole('Estudiante');
+    }
 
 
     public function table(Table $table): Table

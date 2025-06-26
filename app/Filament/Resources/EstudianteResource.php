@@ -94,12 +94,14 @@ public static function canCreate(): bool
                     ->reactive() 
                     ,
                 Forms\Components\TextInput::make('telefono')
-                    ->label('Teléfono')
+                    ->label('N° de WhatsApp o Teléfono')
                     ->tel()
                     ->required()
                     ->numeric()
                     ->mask('999999999') 
-                    ->rule('digits:9'),
+                    ->rule('digits:9')
+                    ->helperText('Ingrese un número de teléfono con WhatsApp activo para que podamos contactarlo en caso sea necesario.')
+                    ->placeholder('Ej. 987654321'),
                 Forms\Components\Select::make('ciclo')
                    ->label('Ciclo de estudios')
                     ->options([
@@ -114,7 +116,9 @@ public static function canCreate(): bool
                 Forms\Components\TextInput::make('facultad')
                     ->label('Facultad')
                     ->required()
-                    ->maxLength(250),
+                    ->maxLength(250)
+                    ->placeholder('Ej. FISME')
+                    ,
                 Forms\Components\Select::make('carrera')
                     ->label('Carrera profesional')
                     ->required()

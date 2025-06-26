@@ -14,6 +14,12 @@ class PracticasPastel extends ChartWidget
     
 
     protected static ?int $sort = 2;
+    public static function canView(): bool
+    {
+          /** @var User $user */
+          $user = auth()->user();
+        return auth()->check() && !$user->hasRole('Estudiante');
+    }
 
     protected int | string | array $columnSpan = 1;
  
