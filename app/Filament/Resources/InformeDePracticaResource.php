@@ -15,6 +15,9 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use Filament\Tables\Actions\BulkAction;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\InformeDePracticaExport;
 
 class InformeDePracticaResource extends Resource
 {
@@ -96,7 +99,6 @@ class InformeDePracticaResource extends Resource
                     
                   Tables\Columns\TextColumn::make('jurados')
                     ->label('Jurados')
-                    ->searchable()
                     ->html()
                     ->formatStateUsing(function ($record) {
                         return $record->jurados->map(fn ($jurado) =>
@@ -107,7 +109,6 @@ class InformeDePracticaResource extends Resource
 
                     Tables\Columns\TextColumn::make('jurados.cargo')
                         ->label('Cargos')
-                        ->searchable()
                         ->html()
                         ->formatStateUsing(function ($state) {
                             return str_replace(',', '<br>', $state);
@@ -163,7 +164,9 @@ class InformeDePracticaResource extends Resource
                      ->extraAttributes([
                          'style' => 'max-width: 140px; white-space: normal; overflow-wrap: break-word; text-align: justify;',
                     ])
-                     ->toggleable(isToggledHiddenByDefault: false),
+                     ->toggleable(isToggledHiddenByDefault: false)
+                     ->searchable()
+                     ,
                 
                 Tables\Columns\TextColumn::make('estado')
                     ->label('Estado') 
@@ -410,11 +413,24 @@ class InformeDePracticaResource extends Resource
                 
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-                ExportBulkAction::make()
-            ]);
+            Tables\Actions\BulkActionGroup::make([
+                Tables\Actions\DeleteBulkAction::make(),
+               
+            ]),
+             BulkAction::make('exportarExcel')
+                    ->label('Exportar seleccionados')
+                    ->icon('heroicon-m-arrow-down-tray')
+                    ->action(function ($records) {
+                        $ids = $records->pluck('id')->toArray();
+
+                        return Excel::download(
+                            new InformeDePracticaExport($ids),
+                            'Listado de Informes de Práctica.xlsx'
+                        );
+                    })
+                    ->requiresConfirmation()
+                    ->deselectRecordsAfterCompletion(),
+        ]);    
     }
 
     public static function getRelations(): array

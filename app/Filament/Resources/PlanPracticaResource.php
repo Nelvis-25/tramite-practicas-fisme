@@ -21,6 +21,10 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
+use Filament\Tables\Actions\BulkAction;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\PlanDePracticaExport;
+
 class PlanPracticaResource extends Resource
 { 
     
@@ -147,7 +151,9 @@ public static function shouldRegisterNavigation(): bool
                             return trim("$grado $nombre");
                         })->implode('<br>') ?? '<em>Sin integrantes</em>';
                     })
-                    ->wrap(),
+                    ->wrap()
+                    ->sortable()
+                    ,
                 
                  Tables\Columns\TextColumn::make('cargos_comision')
                     
@@ -210,6 +216,7 @@ public static function shouldRegisterNavigation(): bool
                     ->extraAttributes([
                         'style' => 'width: 150px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; word-wrap: break-word;',
                     ])
+                    ->searchable()
                      ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('estado')
                     ->label('Estado') 
@@ -561,12 +568,24 @@ public static function shouldRegisterNavigation(): bool
                 }),
                 Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-                ExportBulkAction::make()
-            ]);
+           ->bulkActions([
+            Tables\Actions\BulkActionGroup::make([
+                Tables\Actions\DeleteBulkAction::make(),
+            ]),
+            BulkAction::make('exportarExcel')
+                ->label('Exportar seleccionados')
+                ->icon('heroicon-m-arrow-down-tray')
+                ->action(function ($records) {
+                    $ids = $records->pluck('id')->toArray();
+
+                    return Excel::download(
+                        new PlanDePracticaExport($ids),
+                        'Listado de Planes de Práctica.xlsx'
+                    );
+                })
+                ->requiresConfirmation()
+                ->deselectRecordsAfterCompletion(),
+        ]);
     }
 
     public static function getRelations(): array

@@ -105,10 +105,7 @@ class SolicitudeResource extends Resource
                 Forms\Components\Select::make('linea_investigacion_id')
                     ->relationship('lineaInvestigacion', 'nombre')
                     ->required(),
-                //Forms\Components\Select::make('asesor_id')
-                   // ->relationship('asesor', 'nombre')
-                   // ->required()
-                   // ->searchable(),
+
                 Forms\Components\Select::make('asesor_id')
                     ->label('Seleccione su asesor')
                     ->relationship('asesor', 'nombre', modifyQueryUsing: function ($query) {
@@ -209,10 +206,7 @@ class SolicitudeResource extends Resource
                     'style' => 'width: 250px; word-wrap: break-word; white-space: normal;text-align: justify;',
                 ])
                     ,
-                Tables\Columns\TextColumn::make('asesor.nombre')
-                   ->label('Asesor')
-                   ->numeric()
-                   ->sortable(),
+
                 Tables\Columns\TextColumn::make('asesor.nombre')
                     ->label('Asesor')
                     ->formatStateUsing(function ($state, $record) {
@@ -239,8 +233,8 @@ class SolicitudeResource extends Resource
                     ->color(fn ($record) => $record->solicitud ? 'primary' : 'danger')
                     ->url(fn ($record) => $record->solicitud ? asset('storage/' . str_replace('storage/', '', $record->solicitud)) : null)
                     ->openUrlInNewTab()
-                    ->tooltip(fn ($record) => $record->solicitud ? 'Ver solicitud ' : 'Sin archivo'),
-
+                    ->tooltip(fn ($record) => $record->solicitud ? 'Ver solicitud ' : 'Sin archivo')
+                    ->toggleable(isToggledHiddenByDefault: false),
                Tables\Columns\IconColumn::make('constancia')
                     ->label('Constancia de cursos aprobados')
                     ->icon('heroicon-o-document-text')
@@ -248,8 +242,8 @@ class SolicitudeResource extends Resource
                     ->color(fn ($record) => $record->constancia ? 'primary' : 'danger')
                     ->url(fn ($record) => $record->constancia ? asset('storage/' . str_replace('storage/', '', $record->constancia)) : null)
                     ->openUrlInNewTab()
-                    ->tooltip(fn ($record) => $record->constancia ? 'Ver constancia' : 'Sin archivo'),
-
+                    ->tooltip(fn ($record) => $record->constancia ? 'Ver constancia' : 'Sin archivo')
+                    ->toggleable(isToggledHiddenByDefault: false),
                Tables\Columns\IconColumn::make('informe')
                     ->label('Plan de prácticas')
                     ->icon('heroicon-o-document-text')
@@ -258,7 +252,7 @@ class SolicitudeResource extends Resource
                     ->url(fn ($record) => $record->informe ? asset('storage/' . str_replace('storage/', '', $record->informe)) : null)
                     ->openUrlInNewTab()
                     ->tooltip(fn ($record) => $record->informe ? 'Ver plan de práctica' : 'Sin archivo')
-                     
+                    ->toggleable(isToggledHiddenByDefault: false)
                     ,
                    Tables\Columns\IconColumn::make('carta_presentacion')
                      ->label('Carta de autorización')
@@ -267,8 +261,8 @@ class SolicitudeResource extends Resource
                      ->color(fn ($record) => $record->carta_presentacion ? 'primary' : 'danger')
                      ->url(fn ($record) => $record->carta_presentacion ? asset('storage/' . str_replace('storage/', '', $record->carta_presentacion)) : null)
                      ->openUrlInNewTab()
-                     ->tooltip(fn ($record) => $record->carta_presentacion ? 'Ver autorización' : 'Sin archivo'),
-
+                     ->tooltip(fn ($record) => $record->carta_presentacion ? 'Ver autorización' : 'Sin archivo')
+                    ->toggleable(isToggledHiddenByDefault: false),
                  Tables\Columns\IconColumn::make('comprobante_pago')
                     ->label('Comprobante de pago')
                     ->icon('heroicon-o-document')
@@ -276,8 +270,8 @@ class SolicitudeResource extends Resource
                     ->color(fn ($record) => $record->comprobante_pago ? 'primary' : 'danger')
                     ->url(fn ($record) => $record->comprobante_pago ? asset('storage/' . str_replace('storage/', '', $record->comprobante_pago)) : null)
                     ->openUrlInNewTab()
-                    ->tooltip(fn ($record) => $record->comprobante_pago ? 'Ver comprobante de pago' : 'Sin archivo'),
-
+                    ->tooltip(fn ($record) => $record->comprobante_pago ? 'Ver comprobante de pago' : 'Sin archivo')
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('estado')
                 ->label('Estado')
                     ->searchable()

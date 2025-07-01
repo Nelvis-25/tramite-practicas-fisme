@@ -14,12 +14,17 @@ class PracticasPastel extends ChartWidget
     
 
     protected static ?int $sort = 2;
-    public static function canView(): bool
-    {
-          /** @var User $user */
-          $user = auth()->user();
-        return auth()->check() && !$user->hasRole('Estudiante');
-    }
+   public static function canView(): bool
+{
+    /** @var \App\Models\User $user */
+    $user = auth()->user();
+
+    return auth()->check() && $user->hasAnyRole([
+        'Director de escuela',
+        'Secretaria',
+        'Admin',
+    ]);
+}
 
     protected int | string | array $columnSpan = 1;
  
@@ -37,7 +42,7 @@ class PracticasPastel extends ChartWidget
         $informesAprobados = InformeDePractica::where('estado', 'Aprobado')->count();
         $informesDesaprobados = InformeDePractica::where('estado', 'Desaprobado')->count();
         $planDesaprobados = PlanPractica::where('estado', 'Desaprobado')->count();
-        $practicasDesarrollo = Practica::where('estado', 'En desarrollo')->count();
+        $practicasDesarrollo = Practica::where('estado', 'En Desarrollo')->count();
         $planEnProceso = PlanPractica::whereNotIn('estado', ['Desaprobado', 'Aprobado'])->count();
 
         return [

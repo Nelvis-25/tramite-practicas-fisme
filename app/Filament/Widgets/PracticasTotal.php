@@ -14,11 +14,16 @@ class PracticasTotal extends BaseWidget
 {
     protected static ?int $sort = 1;
     public static function canView(): bool
-    {
-          /** @var User $user */
-          $user = auth()->user();
-        return auth()->check() && !$user->hasRole('Estudiante');
-    }
+{
+    /** @var \App\Models\User $user */
+    $user = auth()->user();
+
+    return auth()->check() && $user->hasAnyRole([
+        'Director de escuela',
+        'Secretaria',
+        'Admin',
+    ]);
+}
     protected function getStats(): array
     {
           $totalSolicitudes = Solicitude::where('estado', '!=', 'Pendiente')->count();

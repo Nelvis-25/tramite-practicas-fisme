@@ -17,6 +17,7 @@ use Filament\Tables\View\TablesRenderHook;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
 class EstudianteResource extends Resource
 {
@@ -247,6 +248,7 @@ public static function canCreate(): bool
                 Tables\Actions\BulkActionGroup::make([
                 Tables\Actions\DeleteBulkAction::make(),
                 ]),
+                ExportBulkAction::make('export'),
             ]);
     }
 
